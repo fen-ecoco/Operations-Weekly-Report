@@ -1,0 +1,10 @@
+{
+  "csv_path":    "D:\\info\\0507_test 週報系統與營運例會簡報\\每週營運例會報告ppt\\每週客訴內容.csv",
+  "output_dir":  "D:\\info\\0507_test 週報系統與營運例會簡報\\每週營運例會報告ppt",
+  "python_path": "python",
+  "node_path":   "node",
+  "git_path":    "git",
+  "github_repo": "https://github.com/fen-ecoco/Operations-Weekly-Report.git",
+  "github_user": "fen-ecoco",
+  "github_pat":  "ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+}
