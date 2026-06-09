@@ -1,91 +1,128 @@
-# ============================================================
-# ecoco 每週客訴自動化流程
-# 每週一中午前自動執行 Step 1~4 + Push + 本機同步
-# ============================================================
+# =============================================================
+# ecoco 每週客訴週報自動化主流程
+# 每週一 11:00 前自動執行 Step 1~4 + Push + 本機同步
+# =============================================================
 
 param(
-    [switch]$DryRun    # 加 -DryRun 僅測試，不 push
+    [switch]$DryRun   # 加 -DryRun 僅本機執行，不 push
 )
 
 $ErrorActionPreference = "Stop"
-$BASE    = Split-Path -Parent $MyInvocation.MyCommand.Path
-$CFG     = Get-Content "$BASE\config.json" | ConvertFrom-Json
-$LOG     = "$BASE\run_log.txt"
-$PYTHON  = $CFG.python_path   # e.g. "python" or "C:\Python311\python.exe"
-$NODE    = $CFG.node_path     # e.g. "node" or "C:\Program Files\nodejs\node.exe"
-$GIT     = $CFG.git_path      # e.g. "git"
-$REPO    = $CFG.github_repo
-$USER    = $CFG.github_user
-$PAT     = $CFG.github_pat
-$OUT_DIR = $CFG.output_dir
+$BASE = Split-Path -Parent $MyInvocation.MyCommand.Path
+$CFG  = Get-Content "$BASE\config.json" -Encoding UTF8 | ConvertFrom-Json
+$LOG  = "$BASE\run_log.txt"
+
+$CSV_PATH  = $CFG.csv_path
+$OUT_DIR   = $CFG.output_dir          # D:\info\0507_Weekly-Report
+$REPO_DIR  = $CFG.repo_dir            # D:\info\0507_Weekly-Report\Operations-Weekly-Report
+$PYTHON    = $CFG.python_path
+$NODE      = $CFG.node_path
+$GIT       = $CFG.git_path
+$GH_USER   = $CFG.github_user
+$GH_PAT    = $CFG.github_pat
+$GH_REPO   = $CFG.github_repo
 
 function Log($msg) {
-    $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    $ts   = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $line = "[$ts] $msg"
     Write-Host $line
     Add-Content -Path $LOG -Value $line -Encoding UTF8
 }
 
-Log "===== 週報自動化流程開始 ====="
+function Die($msg) { Log "❌ $msg"; exit 1 }
 
-# ── Step 1 + 2：CSV 分析 → data.json ──
-Log "[Step 1+2] 分析 CSV → data.json"
+Log "=========================================="
+Log "  ecoco 週報自動化流程啟動"
+Log "=========================================="
+
+# ──────────────────────────────────────────
+# Step 1 + 2：載入 CSV → 分析 → data.json
+# ──────────────────────────────────────────
+Log "[Step 1] 載入 CSV：$CSV_PATH"
+if (-not (Test-Path $CSV_PATH)) { Die "CSV 找不到：$CSV_PATH" }
+
+Log "[Step 2] 分析資料，更新 DATA 物件 → data.json"
 & $PYTHON "$BASE\analyze.py"
-if ($LASTEXITCODE -ne 0) { Log "❌ analyze.py 失敗"; exit 1 }
-$D = Get-Content "$BASE\data.json" | ConvertFrom-Json
-$WEEK  = $D.week
-$RANGE = $D.range -replace " ", "" -replace "/", "" -replace "~", "-"
-$FNAME = "ecoco_週報_${WEEK}_${RANGE}.pptx"
-Log "✅ 資料分析完成：$WEEK（$($D.range)），共 $($D.total) 件"
+if ($LASTEXITCODE -ne 0) { Die "analyze.py 執行失敗" }
 
-# ── Step 3：產出 PPT ──
+$D      = Get-Content "$BASE\data.json" -Encoding UTF8 | ConvertFrom-Json
+$WEEK   = $D.week
+$RANGE  = $D.range -replace " ","" -replace "/","" -replace "~","-"
+$FNAME  = "ecoco_週報_${WEEK}_${RANGE}.pptx"
+$PPTX   = "$BASE\$FNAME"
+Log "  ✅ 分析完成：$WEEK（$($D.range)），共 $($D.total) 件已分類"
+
+# ──────────────────────────────────────────
+# Step 3：產出 PPT
+# ──────────────────────────────────────────
 Log "[Step 3] 產出 PPT：$FNAME"
 & $NODE "$BASE\generate_ppt_auto.js"
-if ($LASTEXITCODE -ne 0) { Log "❌ generate_ppt_auto.js 失敗"; exit 1 }
-Log "✅ PPT 產出完成"
+if ($LASTEXITCODE -ne 0) { Die "generate_ppt_auto.js 執行失敗" }
+if (-not (Test-Path $PPTX)) { Die "PPTX 未產出：$PPTX" }
+Log "  ✅ PPT 產出完成"
 
-# ── Step 4：視覺 QA（用 PowerShell 開啟 PPTX 供人工確認）──
+# 同步複製到本機輸出目錄
+if (-not (Test-Path $OUT_DIR)) { New-Item -ItemType Directory -Path $OUT_DIR | Out-Null }
+$LOCAL_COPY = "$OUT_DIR\$FNAME"
+Copy-Item $PPTX $LOCAL_COPY -Force
+Log "  ✅ 本機同步：$LOCAL_COPY"
+
+# ──────────────────────────────────────────
+# Step 4：視覺 QA（開啟 PPTX 目視確認）
+# ──────────────────────────────────────────
 Log "[Step 4] 視覺 QA — 開啟 PPTX 確認版面"
-$PPTX_PATH = "$BASE\$FNAME"
-if (Test-Path $PPTX_PATH) {
-    Start-Process $PPTX_PATH
-    Start-Sleep -Seconds 5   # 等待開啟
-    Log "✅ PPTX 已開啟，請目視確認版面"
-} else {
-    Log "⚠ 找不到 PPTX：$PPTX_PATH"
-}
+Start-Process $LOCAL_COPY
+Start-Sleep -Seconds 3
+Log "  ✅ PPTX 已開啟，請確認版面後繼續"
 
 if ($DryRun) {
     Log "⚠ DryRun 模式：略過 Git push"
-    Log "===== 完成（DryRun）====="
+    Log "=========================================="
+    Log "  流程完成（DryRun）"
+    Log "=========================================="
     exit 0
 }
 
-# ── Git Commit + Push ──
+# ──────────────────────────────────────────
+# Git Commit + Push
+# ──────────────────────────────────────────
 Log "[Push] Git commit & push → GitHub"
-$REPO_ROOT = Split-Path -Parent $BASE
-Set-Location $REPO_ROOT
+$REPO_PPTX   = "$REPO_DIR\weekly-ppt\$FNAME"
+$REPO_HIST   = "$REPO_DIR\automation\history.json"
 
-& $GIT add "weekly-ppt\$FNAME" 2>&1 | ForEach-Object { Log $_ }
-& $GIT add "automation\history.json" 2>&1 | ForEach-Object { Log $_ }
-
-$MSG = "feat($WEEK): 客訴週報自動產出 $($D.range)`n`n- 總件數 $($D.total) 件（已分類）`n- 機台問題 $($D.cats[1].pct)%　APP帳號設定 $($D.cats[0].pct)%`n- 自動化流程：analyze.py → generate_ppt_auto.js"
-& $GIT commit -m $MSG 2>&1 | ForEach-Object { Log $_ }
-
-$REMOTE = "https://${USER}:${PAT}@github.com/$($REPO.Split('/')[-2])/$($REPO.Split('/')[-1])"
-& $GIT push $REMOTE main 2>&1 | ForEach-Object { Log $_ }
-if ($LASTEXITCODE -ne 0) { Log "❌ Git push 失敗（PAT 可能已過期，請更新 config.json）"; exit 1 }
-
-Log "✅ Push 成功 → $REPO"
-
-# ── 本機同步確認 ──
-$LOCAL_PPTX = "$OUT_DIR\$FNAME"
-if (Test-Path $LOCAL_PPTX) {
-    Log "✅ 本機已同步：$LOCAL_PPTX"
-} else {
-    Log "⚠ 本機檔案未找到，嘗試複製..."
-    Copy-Item $PPTX_PATH $OUT_DIR -Force
-    Log "✅ 複製完成：$LOCAL_PPTX"
+# 確保 REPO 存在（首次 clone）
+if (-not (Test-Path $REPO_DIR)) {
+    Log "  首次執行：clone repo..."
+    Set-Location (Split-Path $REPO_DIR)
+    & $GIT clone "https://${GH_USER}:${GH_PAT}@$($GH_REPO.Replace('https://',''))" | ForEach-Object { Log "  $_" }
 }
 
-Log "===== 週報自動化流程完成 ✅ ====="
+# 複製 PPTX 與 history 到 repo
+if (-not (Test-Path "$REPO_DIR\weekly-ppt")) { New-Item -ItemType Directory "$REPO_DIR\weekly-ppt" | Out-Null }
+Copy-Item $PPTX          $REPO_PPTX -Force
+Copy-Item "$BASE\history.json" $REPO_HIST -Force
+
+Set-Location $REPO_DIR
+
+& $GIT config user.email "fen-ecoco@ecoco.com.tw"
+& $GIT config user.name  "fen-ecoco"
+& $GIT add "weekly-ppt\$FNAME" "automation\history.json" 2>&1 | ForEach-Object { Log "  $_" }
+
+$MSG = "feat(${WEEK}): 客訴週報自動產出 $($D.range)`n`n總件數 $($D.total) 件 | 機台 $($D.cats[1].pct)% | APP帳號 $($D.cats[0].pct)%`n自動化流程：analyze.py → generate_ppt_auto.js"
+& $GIT commit -m $MSG 2>&1 | ForEach-Object { Log "  $_" }
+
+$REMOTE = "https://${GH_USER}:${GH_PAT}@$($GH_REPO.Replace('https://',''))"
+& $GIT push $REMOTE main 2>&1 | ForEach-Object { Log "  $_" }
+if ($LASTEXITCODE -ne 0) { Die "Push 失敗（PAT 可能已過期，請更新 config.json 的 github_pat）" }
+
+Log "  ✅ Push 成功 → $GH_REPO"
+
+# ──────────────────────────────────────────
+# 完成摘要
+# ──────────────────────────────────────────
+Log "=========================================="
+Log "  ✅ 所有步驟完成"
+Log "  PPTX 本機：$LOCAL_COPY"
+Log "  PPTX GitHub：weekly-ppt/$FNAME"
+Log "  歷史資料：automation/history.json"
+Log "=========================================="
