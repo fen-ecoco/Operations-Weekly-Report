@@ -43,9 +43,6 @@ if ($LASTEXITCODE -ne 0) {
 }
 $D      = Get-Content "$BASE\data.json" -Encoding UTF8 | ConvertFrom-Json
 $WEEK   = $D.week
-$RCLEAN = $D.range -replace " ","" -replace "/","" -replace "~","-"
-$FNAME  = "ecoco_weekly_${WEEK}_${RCLEAN}.pptx"
-$PPTX   = "$BASE\$FNAME"
 Log "  OK: $WEEK ($($D.range)) - $($D.total) records"
 
 # --- Step 3: Generate PPT ---
@@ -55,11 +52,14 @@ if ($LASTEXITCODE -ne 0) {
     Log "ERROR: generate_ppt_auto.js failed"
     exit 1
 }
-if (-not (Test-Path $PPTX)) {
-    Log "ERROR: PPTX not found after generation: $PPTX"
+Start-Sleep -Seconds 2
+$PPTX = Get-ChildItem "$BASE\*.pptx" | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+if (-not $PPTX) {
+    Log "ERROR: No PPTX found in $BASE after generation"
     exit 1
 }
-Log "  OK: PPT generated"
+$FNAME = Split-Path $PPTX -Leaf
+Log "  OK: PPT generated -> $FNAME"
 
 # Copy to output dir (local sync)
 if (-not (Test-Path $OUT_DIR)) {
@@ -71,7 +71,7 @@ Log "  OK: Local sync -> $LOCAL_COPY"
 
 # --- Step 4: Visual QA ---
 Log "[Step 4] Opening PPTX for visual check..."
-Start-Process $LOCAL_COPY
+if (Test-Path $LOCAL_COPY) { Start-Process $LOCAL_COPY } else { Start-Process $PPTX }
 Start-Sleep -Seconds 3
 Log "  OK: PPTX opened - please verify layout"
 
@@ -105,7 +105,7 @@ Copy-Item "$BASE\history.json" $REPO_HIST -Force
 Set-Location $REPO_DIR
 & $GIT config user.email "fen-ecoco@ecoco.com.tw"
 & $GIT config user.name "fen-ecoco"
-& $GIT add "weekly-ppt\$FNAME" "automation\history.json" 2>&1 | ForEach-Object { Log "  $_" }
+& $GIT add "weekly-ppt" "automation\history.json" 2>&1 | ForEach-Object { Log "  $_" }
 
 $MSG = "feat($WEEK): weekly report $($D.range) - $($D.total) records"
 & $GIT commit -m $MSG 2>&1 | ForEach-Object { Log "  $_" }
