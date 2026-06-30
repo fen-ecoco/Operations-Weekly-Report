@@ -1,3 +1,4 @@
+import re
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -141,16 +142,35 @@ def analyze(df):
                "col": bat_colors[i]}
               for i, (k, v) in enumerate(bat_vc.head(2).items())]
 
-    # ── 熱點站點 ──
-    area_top = df[df["站點區域"].notna()]["站點區域"].value_counts().head(3)
+    # ── 熱點站點（過濾無效區域值：空值、破折號、站點編號如 es0984）──
+    def is_valid_area(v):
+        if not v or str(v).strip() in ["-", "--", "nan", "", "None"]:
+            return False
+        if re.match(r"^[a-zA-Z0-9_\-]+$", str(v).strip()):  # 純英數字 = 站點編號
+            return False
+        if len(str(v).strip()) < 2:
+            return False
+        return True
+
+    valid_mask = df["站點區域"].apply(
+        lambda x: is_valid_area(x) if pd.notna(x) else False
+    )
+    area_df  = df[valid_mask]
+    area_top = area_df["站點區域"].value_counts().head(3)
     hotAreas = []
     for area, area_cnt in area_top.items():
-        sub = df[df["站點區域"] == area]["站點名稱"].value_counts().head(3)
-        hotAreas.append({
-            "area": area,
-            "total": int(area_cnt),
-            "spots": [{"name": s, "count": int(c)} for s, c in sub.items()]
-        })
+        sub = area_df[area_df["站點區域"] == area]["站點名稱"].value_counts().head(3)
+        spots = [
+            {"name": s, "count": int(c)}
+            for s, c in sub.items()
+            if s and str(s).strip() not in ["-", "nan", "", "None"]
+        ]
+        if spots:
+            hotAreas.append({
+                "area": area,
+                "total": int(area_cnt),
+                "spots": spots
+            })
 
     # ── 加總 ──
     summary = {
