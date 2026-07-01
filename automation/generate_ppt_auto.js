@@ -178,7 +178,16 @@ D.hotAreas.forEach(area=>{
   aY+=0.27;
   area.spots.forEach(spot=>{
     if(aY>5.50) return;
-    s2.addText(`・${spot.name}`,{x:6.30,y:aY,w:2.80,h:0.22,fontSize:8.5,color:"333333",fontFace:FC,valign:"middle"});
+    if(spot.zone && spot.zone !== "" && spot.zone !== "nan") {
+      // ・[區別藍色] [站點名稱深灰]
+      s2.addText([
+        {text:`・`,       options:{color:"333333", fontSize:8.5}},
+        {text:`${spot.zone}  `, options:{color:"0076A9", fontSize:8.5, bold:true}},
+        {text:spot.name,  options:{color:"333333", fontSize:8.5}},
+      ], {x:6.28, y:aY, w:2.85, h:0.22, fontFace:FC, valign:"middle"});
+    } else {
+      s2.addText(`・${spot.name}`,{x:6.30,y:aY,w:2.80,h:0.22,fontSize:8.5,color:"333333",fontFace:FC,valign:"middle"});
+    }
     s2.addText(String(spot.count),{x:9.2,y:aY,w:0.60,h:0.22,fontSize:9,bold:true,color:"888888",align:"right",fontFace:"Arial"});
     aY+=0.225;
   });

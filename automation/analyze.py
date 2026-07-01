@@ -67,7 +67,7 @@ def get_week_info(df):
     range_str = f"{min_d.strftime('%m/%d')} ~ {max_d.strftime('%m/%d')}"
     return f"第{week_num}週", range_str, week_num, min_d, max_d
 
-def analyze(df):
+def analyze(df, zone_map=None):
     """主要統計運算"""
     # 只計有問題類型的記錄
     df_cat = df[df["問題類型"].notna()]
@@ -160,11 +160,14 @@ def analyze(df):
     hotAreas = []
     for area, area_cnt in area_top.items():
         sub = area_df[area_df["站點區域"] == area]["站點名稱"].value_counts().head(3)
-        spots = [
-            {"name": s, "count": int(c)}
-            for s, c in sub.items()
-            if s and str(s).strip() not in ["-", "nan", "", "None"]
-        ]
+        spots = []
+        for s, c in sub.items():
+            if not s or str(s).strip() in ["-", "nan", "", "None"]:
+                continue
+            zone_code = ""
+            if zone_map:
+                zone_code = zone_map.get(str(s).strip(), "")
+            spots.append({"name": str(s).strip(), "count": int(c), "zone": zone_code})
         if spots:
             hotAreas.append({
                 "area": area,
@@ -255,7 +258,29 @@ def main():
     week_label, date_range, week_num, _, _ = get_week_info(df)
     print(f"[2/4] 分析週次：{week_label}（{date_range}）")
 
-    stats = analyze(df)
+    # 讀取收瓶量分析報告，建立 站點名稱 → 區別 對照表
+    zone_map = {}
+    bottle_report_path = cfg.get("bottle_report_path", "")
+    if bottle_report_path and os.path.exists(bottle_report_path):
+        try:
+            br = pd.read_csv(bottle_report_path, encoding="utf-8-sig")
+            # 嘗試多種可能的欄位名稱
+            name_col = next((c for c in br.columns if "站點名稱" in c or "站點" in c and "名" in c), None)
+            zone_col = next((c for c in br.columns if "區別" in c or "分區" in c or "類別" in c), None)
+            if name_col and zone_col:
+                for _, row in br[[name_col, zone_col]].dropna().iterrows():
+                    zone_map[str(row[name_col]).strip()] = str(row[zone_col]).strip()
+                print(f"  ✅ 讀取收瓶量分析報告：{len(zone_map)} 筆站點區別對照")
+            else:
+                print(f"  ⚠ 收瓶量分析報告欄位未找到（需含「站點名稱」與「區別」欄）")
+                print(f"    現有欄位：{list(br.columns)}")
+        except Exception as e:
+            print(f"  ⚠ 讀取收瓶量分析報告失敗：{e}")
+    else:
+        if bottle_report_path:
+            print(f"  ⚠ 收瓶量分析報告不存在：{bottle_report_path}")
+
+    stats = analyze(df, zone_map)
     history = load_history()
     trend = build_trend(history, week_num, stats["summary"])
     save_history(history)
