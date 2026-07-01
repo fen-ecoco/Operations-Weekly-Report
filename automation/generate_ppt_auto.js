@@ -179,14 +179,13 @@ D.hotAreas.forEach(area=>{
   area.spots.forEach(spot=>{
     if(aY>5.50) return;
     if(spot.zone && spot.zone !== "" && spot.zone !== "nan") {
-      // ・  [區別深黑粗體]  [站點名稱深灰]
+      // [區別深黑粗體] [站點名稱深灰]，無點號，縮排對齊
       s2.addText([
-        {text:`・  `,          options:{color:"333333", fontSize:8.5}},
-        {text:`${spot.zone}  `,options:{color:"1A1A1A", fontSize:8.5, bold:true}},
-        {text:spot.name,       options:{color:"333333", fontSize:8.5}},
-      ], {x:6.28, y:aY, w:2.85, h:0.22, fontFace:FC, valign:"middle"});
+        {text:`${spot.zone} `, options:{color:"1A1A1A", fontSize:8.5, bold:true}},
+        {text:spot.name,       options:{color:"333333", fontSize:8.5, bold:false}},
+      ], {x:6.36, y:aY, w:2.80, h:0.22, fontFace:FC, valign:"middle"});
     } else {
-      s2.addText(`・${spot.name}`,{x:6.30,y:aY,w:2.80,h:0.22,fontSize:8.5,color:"333333",fontFace:FC,valign:"middle"});
+      s2.addText(`  ${spot.name}`,{x:6.36,y:aY,w:2.80,h:0.22,fontSize:8.5,color:"333333",fontFace:FC,valign:"middle"});
     }
     s2.addText(String(spot.count),{x:9.2,y:aY,w:0.60,h:0.22,fontSize:9,bold:true,color:"888888",align:"right",fontFace:"Arial"});
     aY+=0.225;
