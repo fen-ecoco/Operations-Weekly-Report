@@ -1,129 +1,172 @@
-# ecoco 每週客訴分析 + 例會PPT 自動產出系統
+# ecoco 每週客訴週報 自動產出系統
 
-**版本：v5　｜　維護：行銷客服專員　｜　技術：pptxgenjs + Python**
+**版本：v6　｜　維護：行銷客服專員　｜　技術：pptxgenjs + Python + PowerShell**
 
 ---
 
-## 📁 檔案結構
+## 📁 專案結構
 
 ```
-ecoco-weekly-analysis/
-├── SKILL.md              # Claude AI 技能定義（觸發規則 + 完整規格）
-├── README.md             # 本文件
-├── generate_ppt.js       # PPT 產出主程式（每週更新 DATA 物件即可）
-└── 輸出範例/
-    └── ecoco_週報_第22週_0525-0531_v5.pptx
+D:\info\0507_Weekly-Report\
+├── 每週客訴內容.csv              ← 每週更新（週一 11:00 前放入）
+├── 收瓶量分析報告.csv            ← 站點區別對照表（A/B/C 代碼）
+└── Operations-Weekly-Report\
+    ├── README.md                 ← 本文件
+    ├── weekly-ppt\               ← 每週產出的 PPTX（自動存入）
+    └── automation\
+        ├── analyze.py            ← Step 1+2：CSV 分析 → data.json
+        ├── generate_ppt_auto.js  ← Step 3：data.json → PPTX
+        ├── run_weekly.ps1        ← 主流程腳本（Steps 1-4 + push）
+        ├── setup_scheduler.ps1   ← 首次安裝工作排程器
+        ├── config.json           ← 本機設定（含路徑與 PAT）
+        ├── config.json.example   ← 設定範本
+        ├── history.json          ← 週次歷史資料（自動維護）
+        └── run_log.txt           ← 執行紀錄
 ```
 
 ---
 
-## 🚀 每週操作步驟
+## 🚀 每週自動流程（每週一 11:00 自動觸發）
 
-### Step 1　統計本週資料
-
-上傳 `每週客訴內容.csv` 到 Claude，說：
-
-> 「請分析本週，同上週的解析」
-
-Claude 會自動輸出：問題類型佔比、非機台 Top3、收瓶機/電池機 Top3、熱點站點、趨勢 delta 數值。
-
----
-
-### Step 2　更新 DATA 物件
-
-將統計結果填入 `generate_ppt.js` 的 `const D = { ... }` 區塊：
-
-| 欄位 | 說明 |
-|------|------|
-| `week` | 週次，如 `"第23週"` |
-| `range` | 日期區間，如 `"06/01 ~ 06/07"` |
-| `total` | 總件數 |
-| `cats` | 6 種問題類型 count/pct（固定順序） |
-| `trend` | 近 4 週趨勢，每格 `[值, delta]` |
-| `nonMachine` | 非機台問題 Top3，含 note 說明文字 |
-| `machIssues` | 機台問題前5 + 其他合計 |
-| `bottleTop3` | 收瓶機 Top3 |
-| `batTop` | 電池機 Top2 |
-| `hotAreas` | 熱點城市前3（各含前3站點） |
-| `alertText` | 警示說明文字（無異常填 `""`） |
-
----
-
-### Step 3　產出 PPT
-
-```bash
-node generate_ppt.js
+```
+Task Scheduler 自動啟動 run_weekly.ps1
+  │
+  ├─ Step 1+2  python analyze.py
+  │    ├─ 讀取 每週客訴內容.csv
+  │    ├─ 讀取 收瓶量分析報告.csv（站點 → 區別代碼對照）
+  │    └─ 輸出 data.json
+  │
+  ├─ Step 3    node generate_ppt_auto.js
+  │    └─ 產出 ecoco_weekly_第N週_MMDD-MMDD.pptx
+  │         ├─ 本機：D:\info\0507_Weekly-Report\
+  │         └─ GitHub：weekly-ppt\
+  │
+  ├─ Step 4    自動開啟 PPTX 目視確認
+  │
+  └─ git commit + push → GitHub ✅
 ```
 
-輸出至 `/mnt/user-data/outputs/ecoco_週報_第N週_MMDD-MMDD.pptx`
-
 ---
 
-### Step 4　視覺 QA
-
-```bash
-python3 /mnt/skills/public/pptx/scripts/office/soffice.py \
-  --headless --convert-to pdf 輸出檔案.pptx
-
-pdftoppm -jpeg -r 150 輸出檔案.pdf /tmp/slide
-```
-
-開啟 `/tmp/slide-1.jpg` 和 `/tmp/slide-2.jpg` 與參考圖對照。
-
----
-
-## 🎨 ecoco VI 色系
-
-| 色名 | 色碼 | 主要用途 |
-|------|------|----------|
-| Orange | `#FF5000` | Section bar、加總欄、熱點件數 |
-| Blue | `#060E9F` | 表頭、收瓶機側欄、section 文字 |
-| Yellow | `#FFCE00` | 警示框邊框、圓餅第4色 |
-| LightBlue | `#8EB8C9` | 圓餅第5色、電池機大卡邊框 |
-| Beige | `#FAE0B8` | 最新週底色、熱點城市列、警示框底 |
-| DarkBlue | `#0076A9` | 圓餅第3色、▼下降 delta |
-| DarkGray | `#333333` | 圖例文字（類別名稱、件數與%） |
-
----
-
-## 📋 兩頁結構說明
+## 📋 兩頁 PPT 結構
 
 ### PAGE 1 — 客訴問題分析
 
 | 區塊 | 內容 |
 |------|------|
-| 標題 | 客服課　日期　客訴問題分析 |
-| 客訴趨勢分析 | 近4週趨勢表（含 ▲▼ delta） |
-| 當週客訴佔比 | 圓餅圖（6類）＋圖例 |
-| 非機台問題 Top3 | 3張卡片（件數・%大字＋說明） |
+| 趨勢表 | 近 4 週客訴數量趨勢（含 ▲▼ delta） |
+| 當週客訴佔比 | 圓餅圖（6 類）＋圖例（件數 + %） |
+| 非機台問題 Top3 | 3 張卡片（問題名稱、件數・%大字、說明文字） |
 
 ### PAGE 2 — 機台問題佔比 與 熱門站點
 
 | 區塊 | 內容 |
 |------|------|
-| 標題 | 客服課　日期　機台問題佔比 與 熱門站點 |
-| 客訴詳情 | 機台問題圓餅 ＋ 收瓶機93%/電池機7%大卡 |
-| 收瓶機/電池機 Top3 | 列表（大%字＋mini bar） |
-| 本週熱點站點 | 前3城市各前3站點 |
-| 警示框 | 本週異常提醒（beige底） |
+| 客訴詳情 | 機台問題圓餅 ＋ 收瓶機 % / 電池機 % 大卡 |
+| 收瓶機 Top3 | 問題排名、大 % 數字、mini bar |
+| 電池機 Top2 | 同上 |
+| 本週熱點站點 | 前 3 城市各前 3 站點，含區別代碼 |
+| 警示框 | 本週異常提醒 |
 
 ---
 
-## ⚠️ 異常偵測規則
+## 🏷️ 熱點站點區別代碼說明
+
+本週熱點站點顯示格式：
+```
+臺南                          17
+  A  億進寢具安南店站           6
+  B  全聯福利中心柳營中山店站    2
+```
+
+- **區別代碼**（A/B/C）來源：`收瓶量分析報告.csv` 的「區別」欄位
+- 字體：Arial Bold，深黑色 `#1A1A1A`
+- 對應邏輯：以「站點名稱」欄位精確比對，找到後取對應「區別」代碼
+- 若無對應代碼：僅顯示站點名稱，不顯示代碼
+
+---
+
+## ⚙️ config.json 設定說明
+
+```json
+{
+  "csv_path":           "D:\\info\\0507_Weekly-Report\\每週客訴內容.csv",
+  "output_dir":         "D:\\info\\0507_Weekly-Report",
+  "repo_dir":           "D:\\info\\0507_Weekly-Report\\Operations-Weekly-Report",
+  "bottle_report_path": "D:\\info\\0507_Weekly-Report\\收瓶量分析報告.csv",
+  "python_path":        "python",
+  "node_path":          "node",
+  "git_path":           "git",
+  "github_repo":        "https://github.com/fen-ecoco/Operations-Weekly-Report.git",
+  "github_user":        "fen-ecoco",
+  "github_pat":         "ghp_你的PAT"
+}
+```
+
+> ⚠️ `bottle_report_path` 為新增欄位（v6），請確認 config.json 已加入此設定。
+
+---
+
+## 🎨 ecoco VI 色系
+
+| 色名 | 色碼 | 用途 |
+|------|------|------|
+| Orange | `#FF5000` | Section bar、加總欄、熱點城市件數 |
+| Blue | `#060E9F` | 表頭、收瓶機側欄、section 文字 |
+| Yellow | `#FFCE00` | 警示框邊框、圓餅第 4 色 |
+| LightBlue | `#8EB8C9` | 圓餅第 5 色、電池機大卡邊框 |
+| Beige | `#FAE0B8` | 最新週底色、熱點城市列、警示框底 |
+| DarkBlue | `#0076A9` | 圓餅第 3 色、▼ 下降 delta |
+| DarkGray | `#333333` | 圖例文字、站點名稱 |
+| NearBlack | `#1A1A1A` | 熱點站點區別代碼（Bold） |
+
+---
+
+## ⚠️ 異常偵測規則（自動產生警示文字）
 
 | 條件 | 等級 |
 |------|------|
-| 單一非機台問題 > 30% | 🚨 嚴重 |
-| 同一問題單日 > 10件 | ⚠️ 注意 |
-| 問題類型排名翻轉 | ⚠️ 注意 |
-| 電池機件數 = 0 | ℹ️ 觀察 |
-| 同問題連兩週上升 | ⚠️ 注意 |
+| 非機台問題佔比 > 10% | ⚠️ 自動加入警示框 |
+| 收瓶機 Top1 佔比 ≥ 25% | ⚠️ 提醒確認清空頻率 |
+| 站點區域填入異常值（站點編號、`-`） | 🔧 自動過濾，不顯示 |
+
+---
+
+## 🔧 手動執行
+
+```powershell
+cd "D:\info\0507_Weekly-Report\Operations-Weekly-Report\automation"
+
+# 完整流程（含 push）
+powershell -ExecutionPolicy Bypass -File ".\run_weekly.ps1"
+
+# 僅測試（不 push）
+powershell -ExecutionPolicy Bypass -File ".\run_weekly.ps1" -DryRun
+```
+
+---
+
+## 🔑 PAT 更新方式
+
+GitHub Classic PAT 若過期：
+1. GitHub → Settings → Developer settings → Tokens (classic) → Generate new token（勾選 `repo`）
+2. 貼入 `automation\config.json` 的 `github_pat` 欄位
+
+---
+
+## 📝 版本紀錄
+
+| 版本 | 日期 | 變更說明 |
+|------|------|----------|
+| v6 | 2026-06 | 熱點站點加入區別代碼（A/B/C）顯示；過濾站點編號異常值 |
+| v5 | 2026-06 | 像素精準版面，符合 ecoco VI 色系規範 |
+| v4 | 2026-06 | 移除 Header/Footer 色塊，改純文字標題 |
+| v3 | 2026-06 | 圓餅圖改用 pptxgenjs 原生圖表 |
+| v2 | 2026-06 | 初版 PPT 自動產出 |
 
 ---
 
 ## 🔗 相關資源
 
-- 週報資料來源：Google Sheets（每週匯出 CSV）
-- PPT 參考範本：`D:\info\0507_test\每週營運例會報告ppt\`
-- 部署系統：Render（`ecoco-complaint-analyzer.onrender.com`）
-- GitHub Repo：`fen-ecoco/fen-ecoco-complaint_webapp2`
+- GitHub Repo：[fen-ecoco/Operations-Weekly-Report](https://github.com/fen-ecoco/Operations-Weekly-Report)
+- 客訴分析系統：[ecoco-complaint-analyzer.onrender.com](https://ecoco-complaint-analyzer.onrender.com)
