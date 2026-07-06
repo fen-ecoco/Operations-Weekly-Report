@@ -100,7 +100,10 @@ if (-not (Test-Path "$REPO_DIR\weekly-ppt")) {
     New-Item -ItemType Directory "$REPO_DIR\weekly-ppt" | Out-Null
 }
 Copy-Item $PPTX          $REPO_PPTX -Force
-Copy-Item "$BASE\history.json" $REPO_HIST -Force
+# Only copy history.json if source and destination are different paths
+if ($BASE -ne "$REPO_DIR\automation") {
+    Copy-Item "$BASE\history.json" $REPO_HIST -Force
+}
 
 Set-Location $REPO_DIR
 & $GIT config user.email "fen-ecoco@ecoco.com.tw"
