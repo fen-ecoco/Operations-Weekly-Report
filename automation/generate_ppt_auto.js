@@ -1,211 +1,407 @@
-/**
- * ecoco 每週例會PPT 自動產出腳本 — Step 3
- * 讀取 data.json → 產出 PPTX（v5 pixel-accurate layout）
- */
-const pptxgen = require("pptxgenjs");
-const fs      = require("fs");
-const path    = require("path");
+const pptxgen = require('pptxgenjs');
+const fs = require('fs');
+const path = require('path');
 
-// ── 路徑設定 ──
-const BASE     = __dirname;
-const cfg      = JSON.parse(fs.readFileSync(path.join(BASE,"config.json"),"utf8"));
-const D        = JSON.parse(fs.readFileSync(path.join(BASE,"data.json"),"utf8"));
-const OUT_DIR  = cfg.output_dir;
-const REPO_DIR = path.join(BASE,"..","weekly-ppt");
-const FNAME    = `ecoco_週報_${D.week}_${D.range.replace(/ /g,"").replace(/\//g,"").replace(/~/g,"-")}.pptx`;
-const OUT_LOCAL = path.join(OUT_DIR, FNAME);
-const OUT_REPO  = path.join(REPO_DIR, FNAME);
+const D = JSON.parse(fs.readFileSync(path.join(__dirname, 'data.json'), 'utf-8'));
+const ICON = (n) => path.join(__dirname, 'icons', `${n}.png`);
 
-// ── VI 色系 ──
-const VI = {
-  orange:"FF5000", blue:"060E9F", yellow:"FFCE00",
-  ltBlue:"8EB8C9", beige:"FAE0B8", dkBlue:"0076A9",
-  white:"FFFFFF",  darkGray:"333333", textGray:"888888",
-  border:"E0E6F0", rowAlt:"F5F7FC",
-  trendUp:"FF5000", trendDn:"0076A9",
+// ---------- ecoco VI 色系 ----------
+const C = {
+  orange: 'FF5000',
+  blue: '060E9F',
+  yellow: 'FFCE00',
+  beige: 'FAE0B8',
+  lightBlue: '8EB9C9',
+  darkBlue: '0076A9',
+  darkGray: '333333',
+  textGray: '888888',
+  white: 'FFFFFF',
 };
-const CAT_C  = ["060E9F","FF5000","0076A9","FFCE00","8EB8C9","FAE0B8"];
-const MACH_C = ["FF5000","060E9F","0076A9","FFCE00","8EB8C9","B8BEC8"];
-const FC = "Noto Sans TC";
 
-// ── 工具 ──
-function dCell([v, d], isTotal, isLast) {
-  const bg = isLast ? "FAE0B8" : "FFFFFF";
-  const vc = isTotal ? "FF5000" : "333333";
-  const parts = [{text:String(v), options:{bold:isLast||isTotal, color:vc, fontSize:isTotal?11:10}}];
-  if (d!==0) parts.push({text:` ${d>0?"▲":"▼"}${Math.abs(d)}`,
-    options:{fontSize:6.5, color:d>0?"FF5000":"0076A9", bold:false}});
-  return {text:parts, options:{align:"center", fill:bg, fontFace:FC, valign:"middle"}};
-}
-function secBar(sl, x, y, label, textColor="060E9F") {
-  sl.addShape("rect",{x, y, w:0.05, h:0.22, fill:{color:"FF5000"}});
-  sl.addText(label,{x:x+0.09, y:y+0.01, w:8.8, h:0.22,
-    fontSize:10.5, bold:true, color:textColor, fontFace:FC, valign:"middle"});
-}
+const F_BLACK = 'Noto Sans TC Black';
+const F_BOLD = 'Noto Sans TC Bold';
+const F_MED = 'Noto Sans TC Medium';
 
-let pres = new pptxgen();
-pres.layout = "LAYOUT_16x9";
+const pres = new pptxgen();
+pres.layout = 'LAYOUT_WIDE'; // 13.3 x 7.5
+const PW = 13.3, PH = 7.5;
 
-// ══════════════════════════════════
-//  PAGE 1
-// ══════════════════════════════════
-let s1 = pres.addSlide();
-s1.background = {color:VI.white};
-s1.addText(`客服課　${D.range}　客訴問題分析`,{
-  x:0.18,y:0.06,w:9.6,h:0.26, fontSize:16,bold:true,color:VI.darkGray,fontFace:FC});
-secBar(s1,0.18,0.36,"客訴趨勢分析");
-
-// Trend table
-const TH = ["週次/期間","收瓶機/方舟","二代電池機","註冊帳號","回收點數","優惠券","APP使用","顧客關係","加總"]
-  .map((t,i)=>({text:t, options:{bold:true,fontSize:i===0?8.5:8,
-    fill:i===8?"FF5000":"060E9F",color:"FFFFFF",align:"center",fontFace:FC}}));
-
-const TB = D.trend.map((r,ri)=>{
-  const last=ri===D.trend.length-1;
-  const bg=last?"FAE0B8":(ri%2===0?"FFFFFF":"F5F7FC");
-  const wk={text:`${r.w}\n${r.d}`,options:{fontSize:8,align:"center",fill:bg,color:last?"333333":"555555",bold:last,fontFace:FC,valign:"middle"}};
-  const [rv,rd]=r.rg;
-  const rgParts=[{text:String(rv),options:{bold:last||rv>100,color:rv>100?"FF5000":"333333",fontSize:rv>100?11:10}}];
-  if(rd!==0) rgParts.push({text:` ${rd>0?"▲":"▼"}${Math.abs(rd)}`,options:{fontSize:6.5,color:rd>0?"FF5000":"0076A9"}});
-  const rgCell={text:rgParts,options:{align:"center",fill:last?"FAE0B8":"FFFFFF",fontFace:FC,valign:"middle"}};
-  return [wk,dCell(r.bt,false,last),dCell(r.b2,false,last),rgCell,
-    dCell(r.pt,false,last),dCell(r.cp,false,last),dCell(r.ap,false,last),dCell(r.cr,false,last),dCell(r.tot,true,last)];
-});
-s1.addTable([TH,...TB],{x:0.18,y:0.60,w:9.64,h:1.96,
-  border:{pt:0.5,color:"D1DCF0"},rowH:0.37,
-  colW:[1.05,1.15,1.1,1.1,1.1,0.88,0.88,0.88,0.84]});
-
-secBar(s1,0.18,2.63,`當週客訴佔比 + 主分類佔比（${D.range}）`,"FF5000");
-s1.addChart(pres.ChartType.pie,
-  [{name:"佔比",labels:D.cats.map(c=>c.label),values:D.cats.map(c=>c.count)}],
-  {x:0.07,y:2.89,w:3.86,h:2.56,showLegend:false,showTitle:false,
-   showPercent:true,dataLabelFormatCode:"0%",dataLabelFontSize:9,
-   dataLabelFontBold:true,dataLabelColor:"FFFFFF",chartColors:CAT_C,shadow:{type:"none"}});
-
-const LX=4.05,LY0=2.89,LH=0.425;
-D.cats.forEach((c,i)=>{
-  const y=LY0+i*LH;
-  s1.addShape("rect",{x:LX,y:y+0.07,w:0.20,h:0.20,fill:{color:CAT_C[i]}});
-  s1.addText(c.label,{x:LX+0.26,y:y+0.03,w:2.15,h:0.22,fontSize:10,bold:true,color:"333333",fontFace:FC});
-  s1.addText(`${c.count}件　${c.pct}%`,{x:LX+0.26,y:y+0.24,w:2.15,h:0.18,fontSize:8,color:"333333",fontFace:FC});
-});
-
-const CX=6.33,CY0=2.89,CH=0.875,CW=3.57;
-D.nonMachine.forEach((item,i)=>{
-  const ry=CY0+i*(CH+0.025);
-  const bgs=["FFF4EF","EEF6FB","F5F7FF"];
-  s1.addShape("rect",{x:CX,y:ry,w:CW,h:CH,fill:{color:bgs[i]},line:{color:"E0E6F0",pt:0.5}});
-  s1.addShape("rect",{x:CX,y:ry,w:0.05,h:CH,fill:{color:item.col}});
-  s1.addText(String(item.rank),{x:CX+0.10,y:ry+0.06,w:0.20,h:0.22,fontSize:9,bold:true,color:item.col,fontFace:FC});
-  s1.addText(item.name,{x:CX+0.33,y:ry+0.06,w:2.0,h:0.24,fontSize:10,bold:true,color:"333333",fontFace:FC});
-  s1.addText(`${item.count}件・${item.pct}%`,{x:CX+0.33,y:ry+0.30,w:2.42,h:0.36,fontSize:18,bold:true,color:item.col,fontFace:FC});
-  s1.addText(item.note||"",{x:CX+2.80,y:ry+0.08,w:0.73,h:0.62,fontSize:6,color:"888888",fontFace:FC,wrap:true,valign:"top"});
-  s1.addShape("rect",{x:CX+0.05,y:ry+CH-0.06,w:CW-0.05,h:0.05,fill:{color:"EBEBEB"}});
-  s1.addShape("rect",{x:CX+0.05,y:ry+CH-0.06,w:(CW-0.05)*(item.pct/100),h:0.05,fill:{color:item.col}});
-});
-
-// ══════════════════════════════════
-//  PAGE 2
-// ══════════════════════════════════
-let s2 = pres.addSlide();
-s2.background = {color:VI.white};
-s2.addText(`客服課　${D.range}　機台問題佔比 與 熱門站點`,{
-  x:0.18,y:0.06,w:9.6,h:0.26,fontSize:16,bold:true,color:VI.darkGray,fontFace:FC});
-secBar(s2,0.18,0.36,"客訴詳情與分類佔比");
-s2.addChart(pres.ChartType.pie,
-  [{name:"機台",labels:D.machIssues.map(m=>m.label),values:D.machIssues.map(m=>m.count)}],
-  {x:0.07,y:0.52,w:3.05,h:1.70,showLegend:false,showTitle:false,
-   showPercent:true,dataLabelFormatCode:"0%",dataLabelFontSize:8,
-   dataLabelFontBold:true,dataLabelColor:"FFFFFF",chartColors:MACH_C,shadow:{type:"none"}});
-
-const ML=3.18,MLY0=0.54,MLH=0.245;
-D.machIssues.forEach((m,i)=>{
-  const y=MLY0+i*MLH;
-  s2.addShape("rect",{x:ML,y:y+0.04,w:0.15,h:0.15,fill:{color:MACH_C[i]}});
-  s2.addText(`${m.label}　${m.count}件（${m.pct}%）`,{x:ML+0.20,y,w:3.05,h:0.22,fontSize:8.5,color:"333333",fontFace:FC});
-});
-
-const bigCards=[
-  {x:6.12,label:"收瓶機/方舟",pct:D.bottlePct,count:D.bottleTotal,bg:"FFF3EC",border:"FF5000",txt:"FF5000"},
-  {x:7.32,label:"電池機",      pct:D.batPct,  count:D.batTotal,  bg:"EDF5FB",border:"8EB8C9",txt:"0076A9"},
-];
-bigCards.forEach(c=>{
-  s2.addShape("rect",{x:c.x,y:0.52,w:1.10,h:1.70,fill:{color:c.bg},line:{color:c.border,pt:1.2}});
-  s2.addText(c.label,{x:c.x,y:0.58,w:1.10,h:0.20,fontSize:8,color:"888888",align:"center",fontFace:FC});
-  s2.addText(`${c.pct}%`,{x:c.x,y:0.80,w:1.10,h:0.56,fontSize:32,bold:true,color:c.txt,align:"center",fontFace:"Arial"});
-  s2.addText(`（${c.count}件）`,{x:c.x,y:1.76,w:1.10,h:0.22,fontSize:8,color:"888888",align:"center",fontFace:FC});
-});
-
-secBar(s2,0.18,2.32,"收瓶機、電池機客訴 Top 3");
-secBar(s2,6.20,2.32,`本週熱點站點（${D.week}：${D.range}）`,"FF5000");
-
-const BSTART=2.52;
-s2.addShape("rect",{x:0.18,y:BSTART,w:0.72,h:1.18,fill:{color:"060E9F"}});
-s2.addText("收\n瓶\n機",{x:0.18,y:BSTART,w:0.72,h:1.18,fontSize:10.5,bold:true,color:"FFFFFF",align:"center",valign:"middle",fontFace:FC});
-D.bottleTop3.forEach((item,i)=>{
-  const ry=BSTART+0.02+i*0.385;
-  const bg=i===0?"EDF3FF":i===1?"F4F8FF":"F9FBFF";
-  s2.addShape("rect",{x:0.92,y:ry,w:5.18,h:0.365,fill:{color:bg},line:{color:"E0E6F0",pt:0.4}});
-  s2.addText(`${i+1}`,{x:0.98,y:ry+0.07,w:0.20,h:0.22,fontSize:10,bold:true,color:item.col,fontFace:FC});
-  s2.addText(item.name,{x:1.24,y:ry+0.07,w:3.3,h:0.22,fontSize:9.5,color:"333333",fontFace:FC});
-  s2.addText(`${item.pct}%`,{x:5.26,y:ry+0.04,w:0.78,h:0.28,fontSize:20,bold:true,color:item.col,align:"right",valign:"middle",fontFace:"Arial"});
-  s2.addShape("rect",{x:1.24,y:ry+0.315,w:3.55,h:0.038,fill:{color:"EBEBEB"}});
-  s2.addShape("rect",{x:1.24,y:ry+0.315,w:3.55*(item.pct/100),h:0.038,fill:{color:item.col}});
-});
-
-const BATSTART=BSTART+1.195;
-s2.addShape("rect",{x:0.18,y:BATSTART,w:0.72,h:0.80,fill:{color:"FF5000"}});
-s2.addText("電\n池\n機",{x:0.18,y:BATSTART,w:0.72,h:0.80,fontSize:10.5,bold:true,color:"FFFFFF",align:"center",valign:"middle",fontFace:FC});
-D.batTop.forEach((item,i)=>{
-  const ry=BATSTART+0.02+i*0.378;
-  s2.addShape("rect",{x:0.92,y:ry,w:5.18,h:0.358,fill:{color:i===0?"F0FDF7":"F7FAFE"},line:{color:"E0E6F0",pt:0.4}});
-  s2.addText(`${i+1}`,{x:0.98,y:ry+0.07,w:0.20,h:0.22,fontSize:10,bold:true,color:item.col,fontFace:FC});
-  s2.addText(item.name,{x:1.24,y:ry+0.07,w:3.3,h:0.22,fontSize:9.5,color:"333333",fontFace:FC});
-  s2.addText(`${item.pct}%`,{x:5.26,y:ry+0.04,w:0.78,h:0.28,fontSize:20,bold:true,color:item.col,align:"right",valign:"middle",fontFace:"Arial"});
-  s2.addShape("rect",{x:1.24,y:ry+0.305,w:3.55,h:0.038,fill:{color:"EBEBEB"}});
-  s2.addShape("rect",{x:1.24,y:ry+0.305,w:3.55*(item.pct/100),h:0.038,fill:{color:item.col}});
-});
-
-s2.addShape("rect",{x:0.18,y:4.54,w:5.88,h:0.60,fill:{color:"FAE0B8"},line:{color:"FFCE00",pt:1}});
-s2.addText(D.alertText,{x:0.28,y:4.56,w:5.72,h:0.56,fontSize:7.5,color:"6B4800",fontFace:FC,wrap:true,valign:"top"});
-
-let aY=2.52;
-D.hotAreas.forEach(area=>{
-  if(aY>5.50) return;
-  s2.addShape("rect",{x:6.20,y:aY,w:3.65,h:0.26,fill:{color:"FAE0B8"}});
-  s2.addText(area.area,{x:6.26,y:aY,w:1.8,h:0.26,fontSize:12,bold:true,color:"060E9F",valign:"middle",fontFace:FC});
-  s2.addText(String(area.total),{x:9.2,y:aY,w:0.60,h:0.26,fontSize:13,bold:true,color:"FF5000",align:"right",valign:"middle",fontFace:"Arial"});
-  aY+=0.27;
-  area.spots.forEach(spot=>{
-    if(aY>5.50) return;
-    if(spot.zone && spot.zone !== "" && spot.zone !== "nan") {
-      // 區別代碼（深黑粗體）+ 空格 + 站點名稱（深灰）
-      // 格式對齊參考圖：[  A  站點名稱]
-      s2.addText([
-        {text:`${spot.zone}  `, options:{color:"1A1A1A", fontSize:9, bold:true, fontFace:"Arial"}},
-        {text:spot.name,        options:{color:"333333", fontSize:8.5, bold:false, fontFace:FC}},
-      ], {x:6.38, y:aY, w:3.35, h:0.23, valign:"middle"});
-    } else {
-      s2.addText(`   ${spot.name}`,{x:6.38,y:aY,w:3.35,h:0.23,fontSize:8.5,color:"333333",fontFace:FC,valign:"middle"});
-    }
-    s2.addText(String(spot.count),{x:9.2,y:aY,w:0.60,h:0.22,fontSize:9,bold:true,color:"888888",align:"right",fontFace:"Arial"});
-    aY+=0.225;
+function sectionBar(slide, text, x, y, w, opts = {}) {
+  const barColor = opts.barColor || C.orange;
+  const textColor = opts.textColor || C.blue;
+  slide.addShape('rect', { x, y, w: 0.07, h: 0.28, fill: { color: barColor }, line: { type: 'none' } });
+  slide.addText(text, {
+    x: x + 0.15, y: y - 0.03, w: w - 0.15, h: 0.34,
+    fontFace: F_BLACK, fontSize: 13, bold: true, color: textColor,
+    align: 'left', valign: 'middle', margin: 0,
   });
-  aY+=0.02;
-});
+}
 
-// ── 輸出 ──
-pres.writeFile({fileName: path.join(BASE, FNAME)}).then(()=>{
-  // 複製到 repo
-  if (!fs.existsSync(REPO_DIR)) fs.mkdirSync(REPO_DIR, {recursive:true});
-  fs.copyFileSync(path.join(BASE,FNAME), OUT_REPO);
-  // 複製到本機輸出目錄（Windows路徑）
-  try {
-    if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, {recursive:true});
-    fs.copyFileSync(path.join(BASE,FNAME), OUT_LOCAL);
-    console.log(`✅ PPT 已存至本機：${OUT_LOCAL}`);
-  } catch(e) {
-    console.warn(`⚠ 本機路徑寫入失敗（${OUT_DIR}）：${e.message}`);
+// ============================================================
+// SLIDE 1 — 客訴趨勢分析
+// ============================================================
+function buildSlide1() {
+  const slide = pres.addSlide();
+  slide.background = { color: C.white };
+
+  // ---- 標題 + 週次橢圓徽章（右上角） ----
+  slide.addText('ecoco 客服週報', {
+    x: 0.4, y: 0.16, w: 5, h: 0.4,
+    fontFace: F_BLACK, fontSize: 18, bold: true, color: C.darkGray, margin: 0,
+  });
+  const pillW = 2.7, pillH = 0.42;
+  slide.addShape('roundRect', {
+    x: PW - 0.4 - pillW, y: 0.18, w: pillW, h: pillH, rectRadius: pillH / 2,
+    fill: { color: C.blue }, line: { type: 'none' },
+  });
+  slide.addText(`${D.week}（${D.range}）`, {
+    x: PW - 0.4 - pillW, y: 0.18, w: pillW, h: pillH,
+    fontFace: F_BOLD, fontSize: 12.5, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0,
+  });
+
+  // ---- 頂部四格數據卡 ----
+  const cardsY = 0.75, cardsH = 1.52, cardGap = 0.2;
+  const cardW = (PW - 0.8 - cardGap * 3) / 4;
+  const SC = D.statCards;
+
+  function trendArrow(val, goodWhenDown = true) {
+    // 回傳 {text, color} ； 數值上升 -> ▲ 橘；下降 -> ▼ 深藍（與趨勢表配色一致）
+    if (val > 0) return { text: `▲${val}%`, color: C.orange };
+    if (val < 0) return { text: `▼${Math.abs(val)}%`, color: C.darkBlue };
+    return { text: '—', color: C.textGray };
   }
-  console.log(`✅ PPT 完成：${FNAME}`);
+
+  function statCard(x, accent, icon, title, mainNode, subText, badge) {
+    slide.addShape('roundRect', {
+      x, y: cardsY, w: cardW, h: cardsH, rectRadius: 0.09,
+      fill: { color: 'FFFFFF' }, line: { color: 'E5E5E5', width: 1 },
+      shadow: { type: 'outer', color: '999999', opacity: 0.2, blur: 5, offset: 1.5, angle: 90 },
+    });
+    slide.addShape('roundRect', {
+      x, y: cardsY, w: cardW, h: 0.07, rectRadius: 0.03,
+      fill: { color: accent }, line: { type: 'none' },
+    });
+    slide.addText(title, {
+      x: x + 0.2, y: cardsY + 0.16, w: cardW - 0.7, h: 0.34,
+      fontFace: F_BOLD, fontSize: 12, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
+    });
+    slide.addImage({ path: ICON(icon), x: x + cardW - 0.48, y: cardsY + 0.18, w: 0.28, h: 0.28 });
+
+    slide.addText(mainNode, {
+      x: x + 0.2, y: cardsY + 0.54, w: cardW - 0.4, h: 0.52, valign: 'middle', margin: 0,
+    });
+
+    slide.addText(subText, {
+      x: x + 0.2, y: cardsY + 1.10, w: cardW - 1.1, h: 0.55,
+      fontFace: F_MED, fontSize: 9.2, color: C.textGray, valign: 'top', margin: 0, lineSpacingMultiple: 1.08,
+    });
+    if (badge) {
+      slide.addShape('roundRect', {
+        x: x + cardW - 1.02, y: cardsY + 1.10, w: 0.84, h: 0.32, rectRadius: 0.16,
+        fill: { color: badge.color === C.orange ? 'FFE9DC' : 'DDEAF5' }, line: { type: 'none' },
+      });
+      slide.addText(badge.text, {
+        x: x + cardW - 1.02, y: cardsY + 1.10, w: 0.84, h: 0.32,
+        fontFace: F_BOLD, fontSize: 10.2, bold: true, color: badge.color, align: 'center', valign: 'middle', margin: 0,
+      });
+    }
+  }
+
+  // 卡1：本週客訴總件數
+  {
+    const x = 0.4;
+    const d = SC.card1;
+    const diffText = d.diff >= 0 ? `增加 ${d.diff} 件` : `減少 ${Math.abs(d.diff)} 件`;
+    statCard(x, C.blue, 'headset_blue', `本週客訴總件數 (${D.week})`,
+      [{ text: `${d.value} `, options: { fontSize: 27, bold: true, color: C.blue, fontFace: F_BLACK } },
+       { text: '件', options: { fontSize: 13.5, bold: true, color: C.blue, fontFace: F_BOLD } }],
+      `較上週 (${d.prev}件) ${diffText}`,
+      trendArrow(d.wow_pct));
+  }
+  // 卡2：回報最高主題
+  {
+    const x = 0.4 + (cardW + cardGap);
+    const d = SC.card2;
+    statCard(x, C.orange, 'warn_orange', '回報最高主題',
+      [{ text: d.name, options: { fontSize: 17, bold: true, color: C.orange, fontFace: F_BLACK } }],
+      `佔比 ${d.share}%（共 ${d.count} 件）`,
+      trendArrow(d.share_delta));
+  }
+  // 卡3：客訴量最高站點
+  {
+    const x = 0.4 + 2 * (cardW + cardGap);
+    const d = SC.card3;
+    statCard(x, C.darkBlue, 'pin_darkblue', '客訴量最高站點',
+      [{ text: d.name.replace(/站$/, ''), options: { fontSize: 15.5, bold: true, color: C.darkBlue, fontFace: F_BLACK } }],
+      `${d.area}市（本週 ${d.count} 件）`,
+      { text: (d.diff >= 0 ? `▲${d.diff}件` : `▼${Math.abs(d.diff)}件`), color: d.diff >= 0 ? C.orange : C.darkBlue });
+  }
+  // 卡4：非機台問題佔比
+  {
+    const x = 0.4 + 3 * (cardW + cardGap);
+    const d = SC.card4;
+    statCard(x, C.yellow, 'usercog_gold', '非機台問題佔比',
+      [{ text: `${d.pct}`, options: { fontSize: 27, bold: true, color: '9C7A00', fontFace: F_BLACK } },
+       { text: '%', options: { fontSize: 13.5, bold: true, color: '9C7A00', fontFace: F_BOLD } }],
+      `代表案例類型：${d.sample_type}`,
+      trendArrow(d.pct_delta));
+  }
+
+  // ---- 左下：客訴趨勢分析（近4週）單位：件數 ----
+  const bottomY = cardsY + cardsH + 0.42;
+  const leftW = 7.8, colGap = 0.3, rightX = 0.4 + leftW + colGap, rightW = PW - 0.4 - rightX;
+  sectionBar(slide, '客訴趨勢分析（近4週）　單位：件數', 0.4, bottomY, leftW);
+
+  const catKeysShort = ['machine', 'app_acc', 'points', 'customer', 'coupon', 'app_use'];
+  const catLabelsShort = ['機台問題', 'APP帳號設定問題', '回收點數問題', '顧客關係', '優惠券問題', 'APP使用問題'];
+  const cw2 = [1.12, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.99];
+  const rows2 = [];
+  rows2.push(['週次', ...catLabelsShort, '加總'].map(t => ({
+    text: t, options: { fill: { color: C.blue }, color: C.white, bold: true, fontFace: F_BOLD, fontSize: 11, align: 'center', valign: 'middle' },
+  })));
+  D.trend.forEach((row, idx) => {
+    const isLast = idx === D.trend.length - 1;
+    const rowFill = isLast ? C.beige : (idx % 2 === 0 ? 'FFFFFF' : 'F7F7F9');
+    const cells = [{
+      text: row.w,
+      options: { fill: { color: rowFill }, color: C.darkGray, bold: isLast, fontFace: isLast ? F_BOLD : F_MED, fontSize: 10.5, align: 'center', valign: 'middle' },
+    }];
+    catKeysShort.forEach((k) => {
+      const [val, delta] = row[k];
+      let deltaStr = '', deltaColor = C.textGray;
+      if (delta > 0) { deltaStr = `▲${delta}`; deltaColor = C.orange; }
+      else if (delta < 0) { deltaStr = `▼${Math.abs(delta)}`; deltaColor = C.darkBlue; }
+      cells.push({
+        text: [
+          { text: `${val}`, options: { fontSize: 13.5, bold: true, color: C.darkGray, fontFace: F_BOLD } },
+          { text: deltaStr ? `\n${deltaStr}` : '', options: { fontSize: 9, color: deltaColor, fontFace: F_MED } },
+        ],
+        options: { fill: { color: rowFill }, align: 'center', valign: 'middle' },
+      });
+    });
+    const [tval, tdelta] = row.tot;
+    const tDeltaStr = tdelta > 0 ? `▲${tdelta}` : (tdelta < 0 ? `▼${Math.abs(tdelta)}` : '');
+    cells.push({
+      text: [
+        { text: `${tval}`, options: { fontSize: 13.5, bold: true, color: C.white, fontFace: F_BOLD } },
+        { text: tDeltaStr ? `\n${tDeltaStr}` : '', options: { fontSize: 9, color: C.white, fontFace: F_MED } },
+      ],
+      options: { fill: { color: C.orange }, align: 'center', valign: 'middle' },
+    });
+    rows2.push(cells);
+  });
+  slide.addTable(rows2, {
+    x: 0.4, y: bottomY + 0.38, w: leftW, h: 3.3, rowH: 0.66,
+    colW: cw2, border: { type: 'solid', color: 'E5E5E5', pt: 0.5 }, autoPage: false,
+  });
+
+  // ---- 右下：非機台問題 Top3 ----
+  sectionBar(slide, '非機台問題 Top 3', rightX, bottomY, rightW, { textColor: C.orange });
+  const cardH3 = 1.3, cardGap3 = 0.17;
+  const cardTopY = bottomY + 0.38;
+  const cardBg3 = ['FFF4EF', 'EEF6FB', 'F5F7FF'];
+  D.nonMachine.forEach((item, i) => {
+    const cy = cardTopY + i * (cardH3 + cardGap3);
+    slide.addShape('roundRect', {
+      x: rightX, y: cy, w: rightW, h: cardH3, rectRadius: 0.08,
+      fill: { color: cardBg3[i] }, line: { color: item.col, width: 1 },
+    });
+    slide.addShape('rect', { x: rightX, y: cy, w: 0.06, h: cardH3, fill: { color: item.col }, line: { type: 'none' } });
+    slide.addText(`${item.rank}`, {
+      x: rightX + 0.16, y: cy + 0.12, w: 0.5, h: 0.46,
+      fontFace: F_BLACK, fontSize: 17, bold: true, color: item.col, margin: 0,
+    });
+    slide.addText(item.name, {
+      x: rightX + 0.68, y: cy + 0.1, w: rightW - 0.9, h: 0.4,
+      fontFace: F_BOLD, fontSize: 12.5, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
+    });
+    slide.addText([
+      { text: `${item.count}件`, options: { fontSize: 17, bold: true, color: item.col, fontFace: F_BLACK } },
+      { text: `　${item.pct}%`, options: { fontSize: 11.5, bold: true, color: item.col, fontFace: F_BOLD } },
+    ], { x: rightX + 0.68, y: cy + 0.52, w: rightW - 1.0, h: 0.4, valign: 'middle', margin: 0 });
+    const maxCount = D.nonMachine[0].count;
+    const barW = (rightW - 0.9) * (item.count / maxCount);
+    slide.addShape('rect', { x: rightX + 0.68, y: cy + cardH3 - 0.22, w: rightW - 0.9, h: 0.07, fill: { color: 'E8E8E8' }, line: { type: 'none' } });
+    slide.addShape('rect', { x: rightX + 0.68, y: cy + cardH3 - 0.22, w: barW, h: 0.07, fill: { color: item.col }, line: { type: 'none' } });
+  });
+}
+
+// ============================================================
+// SLIDE 2 — 機台類型客訴與高頻站點融合分析（圖示版）
+// ============================================================
+function buildSlide2() {
+  const slide = pres.addSlide();
+  slide.background = { color: C.white };
+
+  slide.addShape('rect', { x: 0.4, y: 0.22, w: 0.08, h: 0.36, fill: { color: C.darkBlue }, line: { type: 'none' } });
+  slide.addText('客訴機台類型與高頻站點分析', {
+    x: 0.58, y: 0.16, w: 9, h: 0.48,
+    fontFace: F_BLACK, fontSize: 19, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
+  });
+  const pillW2 = 2.7, pillH2 = 0.42;
+  slide.addShape('roundRect', {
+    x: PW - 0.4 - pillW2, y: 0.18, w: pillW2, h: pillH2, rectRadius: pillH2 / 2,
+    fill: { color: C.blue }, line: { type: 'none' },
+  });
+  slide.addText(`${D.week}（${D.range}）`, {
+    x: PW - 0.4 - pillW2, y: 0.18, w: pillW2, h: pillH2,
+    fontFace: F_BOLD, fontSize: 12.5, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0,
+  });
+
+  const cardY = 0.95, cardH = 4.55, cardGap = 0.35;
+  const cardW = (PW - 0.8 - cardGap) / 2;
+  const leftX = 0.4, rightX = leftX + cardW + cardGap;
+
+  function machineCard(x, title, icon, badgeText, badgeColor, top3, cardBorder, headColor) {
+    const badgeTextColor = badgeColor === C.yellow ? C.blue : C.white;
+    slide.addShape('roundRect', {
+      x, y: cardY, w: cardW, h: cardH, rectRadius: 0.1,
+      fill: { color: 'FFFFFF' }, line: { color: 'E2E2E2', width: 1 },
+      shadow: { type: 'outer', color: '999999', opacity: 0.25, blur: 6, offset: 2, angle: 90 },
+    });
+    // header
+    slide.addImage({ path: ICON(icon), x: x + 0.28, y: cardY + 0.22, w: 0.38, h: 0.38 });
+    slide.addText(title, {
+      x: x + 0.76, y: cardY + 0.17, w: 3.0, h: 0.46,
+      fontFace: F_BLACK, fontSize: 18, bold: true, color: headColor, valign: 'middle', margin: 0,
+    });
+    slide.addShape('roundRect', {
+      x: x + cardW - 2.0, y: cardY + 0.22, w: 1.7, h: 0.4, rectRadius: 0.2,
+      fill: { color: badgeColor }, line: { type: 'none' },
+    });
+    slide.addText(badgeText, {
+      x: x + cardW - 2.0, y: cardY + 0.22, w: 1.7, h: 0.4,
+      fontFace: F_BOLD, fontSize: 11.5, bold: true, color: badgeTextColor, align: 'center', valign: 'middle', margin: 0,
+    });
+
+    // top3 list（縮減內襯與間距，加大字級）
+    const headerOffset = 0.75, blockGap = 0.11;
+    let iy = cardY + headerOffset;
+    const itemH = (cardH - headerOffset) / 3;
+    top3.forEach((item) => {
+      slide.addShape('roundRect', {
+        x: x + 0.24, y: iy, w: cardW - 0.48, h: itemH - blockGap, rectRadius: 0.06,
+        fill: { color: 'F8F9FB' }, line: { type: 'none' },
+      });
+      slide.addText(`${item.rank}`, {
+        x: x + 0.36, y: iy + 0.11, w: 0.42, h: 0.42,
+        fontFace: F_BLACK, fontSize: 18, bold: true, color: item.col, margin: 0,
+      });
+      slide.addText([
+        { text: item.name, options: { fontSize: 16, bold: true, color: C.darkGray, fontFace: F_BOLD } },
+        { text: `　合計 ${item.pct}% (${item.count}件)`, options: { fontSize: 14, bold: true, color: item.col, fontFace: F_BOLD } },
+      ], {
+        x: x + 0.85, y: iy + 0.06, w: cardW - 1.15, h: 0.5, valign: 'top', margin: 0,
+      });
+      slide.addImage({ path: ICON('pin_gray'), x: x + 0.85, y: iy + 0.60, w: 0.15, h: 0.15 });
+      const stationTxt = item.station ? `最高回報站點：${item.station}（${item.stationCount}件）` : '無站點資料';
+      slide.addText(stationTxt, {
+        x: x + 1.05, y: iy + 0.55, w: cardW - 1.35, h: 0.26,
+        fontFace: F_MED, fontSize: 10.5, color: C.textGray, valign: 'middle', margin: 0,
+      });
+      iy += itemH;
+    });
+  }
+
+  machineCard(
+    leftX, '收瓶機 ／ 方舟', 'recycle_blue',
+    `${D.bottleTotal}件 (${D.bottlePct}%)`, C.orange,
+    D.bottleTop3, 'E2E2E2', C.blue
+  );
+  machineCard(
+    rightX, '二代電池機', 'battery_orange',
+    `${D.batTotal}件 (${D.batPct}%)`, C.yellow,
+    D.batTop3, 'E2E2E2', C.blue
+  );
+
+  // alert box
+  const alertY = cardY + cardH + 0.25;
+  slide.addShape('roundRect', {
+    x: 0.4, y: alertY, w: PW - 0.8, h: 0.85, rectRadius: 0.08,
+    fill: { color: C.beige }, line: { color: C.yellow, width: 1.25 },
+  });
+  slide.addImage({ path: ICON('warn'), x: 0.62, y: alertY + 0.24, w: 0.34, h: 0.34 });
+  slide.addText(D.alertText, {
+    x: 1.1, y: alertY + 0.1, w: PW - 1.6, h: 0.65,
+    fontFace: F_MED, fontSize: 10.5, color: '6B4800', valign: 'middle', margin: 0, lineSpacingMultiple: 1.15,
+  });
+}
+
+// ============================================================
+// SLIDE 3 — 月低回收量站點分析
+// ============================================================
+function buildSlide3() {
+  const slide = pres.addSlide();
+  slide.background = { color: C.white };
+
+  slide.addShape('rect', { x: 0.4, y: 0.22, w: 0.08, h: 0.36, fill: { color: C.orange }, line: { type: 'none' } });
+  slide.addText('月低回收量站點改善清單 Top 10', {
+    x: 0.58, y: 0.16, w: 9, h: 0.48,
+    fontFace: F_BLACK, fontSize: 19, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
+  });
+  slide.addText(`Hive 站點回收量貢獻／排名（總 ${D.totalNetworkStations ?? '－'} 站）`, {
+    x: 9.0, y: 0.2, w: 3.9, h: 0.3,
+    fontFace: F_BOLD, fontSize: 10.5, bold: true, color: C.darkBlue, align: 'right', margin: 0,
+  });
+  slide.addText(`資料更新日期：${D.reportGeneratedDate}`, {
+    x: 9.0, y: 0.48, w: 3.9, h: 0.26,
+    fontFace: F_MED, fontSize: 9, color: C.textGray, align: 'right', margin: 0,
+  });
+
+  // table：等級／Hive排名／城市／站點名稱／總回收量／MOM排名趨勢
+  const tX = 0.4, tY = 0.95, tW = PW - 0.8;
+  const cw = [0.95, 2.12, 1.23, 3.96, 2.12, 2.12];
+  const gradeColor = { A: C.orange, B: C.darkBlue, C: C.textGray };
+  const headerCells = ['等級', `Hive排名\n（總${D.totalNetworkStations ?? '－'}）`, '城市', '站點名稱', '總回收量（瓶）', 'MOM排名趨勢'].map(t => ({
+    text: t, options: { fill: { color: C.blue }, color: C.white, bold: true, fontFace: F_BOLD, fontSize: 11, align: 'center', valign: 'middle' },
+  }));
+  const rows = [headerCells];
+  D.lowVolumeStations.forEach((s, i) => {
+    const rowFill = i % 2 === 0 ? 'FFFFFF' : 'F7F7F9';
+    const g = s.grade;
+    let momCell;
+    if (!s.momTrend) {
+      momCell = { text: '－（首次記錄）', options: { fill: { color: rowFill }, color: C.textGray, fontFace: F_MED, fontSize: 9.5, align: 'center', valign: 'middle' } };
+    } else {
+      const diff = s.momTrend.diff;
+      if (diff > 0) momCell = { text: `↑進步 ${diff} 名`, options: { fill: { color: rowFill }, color: C.darkBlue, bold: true, fontFace: F_BOLD, fontSize: 10.5, align: 'center', valign: 'middle' } };
+      else if (diff < 0) momCell = { text: `↓退步 ${Math.abs(diff)} 名`, options: { fill: { color: rowFill }, color: C.orange, bold: true, fontFace: F_BOLD, fontSize: 10.5, align: 'center', valign: 'middle' } };
+      else momCell = { text: '持平', options: { fill: { color: rowFill }, color: C.textGray, fontFace: F_MED, fontSize: 10.5, align: 'center', valign: 'middle' } };
+    }
+    rows.push([
+      { text: g || '－', options: { fill: { color: rowFill }, color: g ? gradeColor[g] : C.textGray, bold: true, fontFace: F_BLACK, fontSize: 14, align: 'center', valign: 'middle' } },
+      { text: s.hiveRank ? `第 ${s.hiveRank} 名` : '－', options: { fill: { color: rowFill }, color: C.textGray, fontFace: F_MED, fontSize: 10.5, align: 'center', valign: 'middle' } },
+      { text: s.city, options: { fill: { color: rowFill }, color: C.darkGray, fontFace: F_MED, fontSize: 11, align: 'center', valign: 'middle' } },
+      { text: s.name, options: { fill: { color: rowFill }, color: C.darkGray, bold: true, fontFace: F_BOLD, fontSize: 11.5, align: 'left', valign: 'middle' } },
+      { text: `${s.contribution.toLocaleString()}`, options: { fill: { color: rowFill }, color: C.darkBlue, bold: true, fontFace: F_BOLD, fontSize: 12, align: 'center', valign: 'middle' } },
+      momCell,
+    ]);
+  });
+
+  slide.addTable(rows, {
+    x: tX, y: tY, w: tW, colW: cw, rowH: 0.42,
+    border: { type: 'solid', color: 'E5E5E5', pt: 0.5 },
+    autoPage: false,
+  });
+
+  // 資料範圍說明
+  const noteY2 = tY + 0.42 * (rows.length) + 0.22;
+  slide.addShape('roundRect', {
+    x: 0.4, y: noteY2, w: tW, h: 0.6, rectRadius: 0.06,
+    fill: { color: 'F5F7FF' }, line: { color: C.lightBlue, width: 0.75 },
+  });
+  slide.addText([
+    { text: '資料來源：Hive，站點貢獻程度以月回收量分級(最近 30 天塑膠＋鋁罐回收量)（前34%是A，中間33%是B，後面33%是C）。', options: { color: C.darkGray, fontSize: 9.5, fontFace: F_MED } },
+  ], {
+    x: 0.65, y: noteY2, w: tW - 0.5, h: 0.6, valign: 'middle', margin: 0, lineSpacingMultiple: 1.15,
+  });
+}
+
+buildSlide1();
+buildSlide2();
+buildSlide3();
+
+const outFile = path.join(__dirname, `ecoco_客服週報_${D.week}_${D.range.replace(/[\s\/]/g, '')}.pptx`);
+pres.writeFile({ fileName: outFile }).then(() => {
+  console.log('PPT 產出完成：', outFile);
 });

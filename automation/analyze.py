@@ -1,317 +1,342 @@
-import re
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-ecoco 每週客訴分析腳本
-每週一中午前自動執行 — Step 1 + Step 2
-讀取 CSV → 計算統計 → 輸出 data.json
+ecoco 客服週報 - 資料分析腳本 (v6)
+資料來源：客訴內容分析.csv（取代原本的 每週客訴內容.csv）
+輸出：data.json，供 generate_ppt_auto.js 讀取產出三頁 PPT
 """
-
-import pandas as pd
 import json
 import os
-import sys
-from datetime import datetime
+from datetime import datetime, timedelta
+import pandas as pd
 
-# ── 設定路徑 ──
-BASE = os.path.dirname(os.path.abspath(__file__))
-CONFIG_PATH = os.path.join(BASE, "config.json")
-HISTORY_PATH = os.path.join(BASE, "history.json")
-DATA_OUT = os.path.join(BASE, "data.json")
+# ---------- 讀取設定檔（路徑一律放在 UTF-8 的 config.json，避免中文路徑寫在 .ps1 造成編碼問題）----------
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(SCRIPT_DIR, "config.json"), "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-def load_config():
-    with open(CONFIG_PATH, encoding="utf-8") as f:
-        return json.load(f)
+COMPLAINT_CSV = CONFIG["complaint_csv_path"]
+VOLUME_CSV = CONFIG["volume_csv_path"]
+GRADE_CSV = CONFIG.get("grade_report_path")  # 收瓶量分析報告.csv：全台站點等級(A/B/C)＋排名，每月更新
+RANK_HISTORY_PATH = os.path.join(SCRIPT_DIR, "rank_history.json")
 
-def load_history():
-    if os.path.exists(HISTORY_PATH):
-        with open(HISTORY_PATH, encoding="utf-8") as f:
-            return json.load(f)
-    return {"weeks": []}
+# ---------- 週次設定：預設自動抓取「上一個完整週」(週一~週日) ----------
+# 若要手動指定其他週次，將下方兩行取消註解並填入日期即可覆蓋自動判斷
+# WEEK_START_OVERRIDE = "2026-08-10"
+WEEK_START_OVERRIDE = None
 
-def save_history(history):
-    with open(HISTORY_PATH, "w", encoding="utf-8") as f:
-        json.dump(history, f, ensure_ascii=False, indent=2)
+if WEEK_START_OVERRIDE:
+    WEEK_START = WEEK_START_OVERRIDE
+else:
+    today = datetime.now()
+    last_monday = today - timedelta(days=today.weekday() + 7)  # 上上週一 -> 這是上週一
+    WEEK_START = last_monday.strftime("%Y-%m-%d")
 
-def clean_df(df):
-    """清理欄位、統一標籤"""
-    df["機台類型"] = df["機台類型"].astype(str).str.strip().replace({"nan": "", "": None})
-    df["問題類型"] = df["問題類型"].astype(str).str.strip().replace("nan", None)
-    df["簡報使用"] = df["簡報使用"].astype(str).str.strip().replace("nan", "")
-    df["站點區域"] = df["站點區域"].astype(str).str.strip().replace("nan", None)
-    df["站點名稱"] = df["站點名稱"].astype(str).str.strip().replace("nan", None)
+_week_num = datetime.strptime(WEEK_START, "%Y-%m-%d").isocalendar()[1]
+WEEK_LABEL = f"第{_week_num}週"
 
-    label_map = {
-        "機台需維護-故障提醒":       "機台需維護/故障提醒",
-        "操作流程異常-無法正常操作":  "操作流程異常/無法正常操作",
-        "忘記密碼-無法重設密碼":      "忘記密碼/無法重設密碼",
-        "機台當機-無回應":            "機台當機/無回應",
-        "螢幕異常顯示-畫面異常":      "螢幕異常顯示/畫面異常",
-        "機台關閉-無法啟動":          "機台關閉/無法啟動",
-        "兌換失敗-顯示錯誤":          "兌換失敗/顯示錯誤",
-        "許願新增站點-設站建議":       "許願新增站點/設站建議",
-        "使用規則-限制條件說明":       "使用規則/限制條件說明",
-        "app畫面顯示與機台狀態不符":  "APP畫面顯示與機台狀態不符",
-        "app無法登入":                "APP無法登入",
-        "app多重異常狀況":            "APP多重異常狀況",
+# ================= 1. 讀取與清理 =================
+df = pd.read_csv(COMPLAINT_CSV)
+df["機台類型"] = df["機台類型"].astype(str).str.strip().replace({"nan": None})
+df["問題類型"] = df["問題類型"].astype(str).str.strip()
+
+label_map = {
+    "app畫面顯示與機台狀態不符": "APP畫面顯示與機台狀態不符",
+    "app無法登入": "APP無法登入",
+    "app多重異常狀況": "APP多重異常狀況",
+}
+df["問題細項"] = df["問題細項"].replace(label_map)
+df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce")
+
+# 讀取「收瓶量分析報告.csv」：全台站點等級(A/B/C)＋排名，供第二頁站點等級標示使用（第三頁已改為僅用 月回收量等級.csv，不再依賴此檔）
+grade_df = None
+if GRADE_CSV and os.path.exists(GRADE_CSV):
+    grade_df = pd.read_csv(GRADE_CSV)
+
+
+def lookup_grade(station_name):
+    if grade_df is None:
+        return None
+    match = grade_df[grade_df["站點名稱"] == station_name]
+    return str(match.iloc[0]["等級"]) if len(match) else None
+
+CATS_ORDER = [
+    ("APP帳號設定問題", "APP帳號設定問題類型"),
+    ("機台問題", "機台問題類型"),
+    ("回收點數問題", "回收點數問題類型"),
+    ("顧客關係", "顧客關係類型"),
+    ("優惠券問題", "優惠券問題類型"),
+    ("APP使用問題", "APP使用問題類型"),
+]
+CAT_C = ["060E9F", "FF5000", "0076A9", "FFCE00", "8EB8C9", "FAE0B8"]
+
+
+def week_slice(monday_str):
+    s = pd.Timestamp(monday_str)
+    e = s + pd.Timedelta(days=7)
+    return df[(df["dt"] >= s) & (df["dt"] < e)].copy(), s, e
+
+
+def top_station(sub):
+    s = sub["站點名稱"].dropna()
+    if len(s) == 0:
+        return "", 0
+    vc = s.value_counts()
+    top = vc.index[0]
+    cnt = int(vc.iloc[0])
+    area = sub[sub["站點名稱"] == top]["站點區域"].dropna()
+    area = area.iloc[0] if len(area) else ""
+    grade = lookup_grade(top)
+    grade_prefix = f"{grade}｜" if grade else ""
+    return f"{grade_prefix}{area}/{top}", cnt
+
+
+wk, wstart, wend = week_slice(WEEK_START)
+total = len(wk)
+range_label = f"{wstart.strftime('%m/%d')} ~ {(wend - pd.Timedelta(days=1)).strftime('%m/%d')}"
+
+# ================= 2. 客訴主分類佔比 =================
+vc_type = wk["問題類型"].value_counts()
+cats = []
+for label, key in CATS_ORDER:
+    c = int(vc_type.get(key, 0))
+    cats.append({"label": label, "count": c, "pct": round(c / total * 100, 1) if total else 0})
+
+# ================= 3. 近4週趨勢 =================
+WEEKS_TREND = [
+    ("第30週", "07/20-07/26", "2026-07-20"),
+    ("第31週", "07/27-08/02", "2026-07-27"),
+    ("第32週", "08/03-08/09", "2026-08-03"),
+    (WEEK_LABEL, range_label, WEEK_START),
+]
+trend_raw = []
+for wl, rng, monday in WEEKS_TREND:
+    twk, _, _ = week_slice(monday)
+    ttot = len(twk)
+    vc = twk["問題類型"].value_counts()
+    row = {
+        "w": wl, "d": rng,
+        "app_acc": int(vc.get("APP帳號設定問題類型", 0)),
+        "machine": int(vc.get("機台問題類型", 0)),
+        "points": int(vc.get("回收點數問題類型", 0)),
+        "customer": int(vc.get("顧客關係類型", 0)),
+        "coupon": int(vc.get("優惠券問題類型", 0)),
+        "app_use": int(vc.get("APP使用問題類型", 0)),
+        "tot": ttot,
     }
-    df["簡報使用"] = df["簡報使用"].replace(label_map)
-    return df
+    trend_raw.append(row)
 
-def get_week_info(df):
-    """從資料日期推算週次與區間"""
-    # 取進件日期
-    dates = pd.to_datetime(df["進件日期"], errors="coerce")
-    min_d, max_d = dates.min(), dates.max()
-    week_num = min_d.isocalendar()[1]
-    range_str = f"{min_d.strftime('%m/%d')} ~ {max_d.strftime('%m/%d')}"
-    return f"第{week_num}週", range_str, week_num, min_d, max_d
+trend = []
+for i, row in enumerate(trend_raw):
+    entry = {"w": row["w"], "d": row["d"]}
+    for key in ["app_acc", "machine", "points", "customer", "coupon", "app_use", "tot"]:
+        cur = row[key]
+        delta = cur - trend_raw[i - 1][key] if i > 0 else 0
+        entry[key] = [cur, delta]
+    trend.append(entry)
 
-def analyze(df, zone_map=None):
-    """主要統計運算"""
-    # 只計有問題類型的記錄
-    df_cat = df[df["問題類型"].notna()]
-    total = len(df_cat)
+# ================= 4. 非機台問題 Top3 =================
+nm = wk[wk["問題類型"] != "機台問題類型"]
+vc_nm = nm["問題細項"].value_counts()
+nm_colors = ["FF5000", "0076A9", "060E9F"]
+nonMachine = []
+for i, (name, cnt) in enumerate(vc_nm.head(3).items()):
+    nonMachine.append({
+        "rank": i + 1, "name": name, "count": int(cnt),
+        "pct": round(cnt / total * 100, 1), "col": nm_colors[i], "note": "",
+    })
 
-    # ── 問題類型佔比（固定順序對應 VI 色序）──
-    cat_order = [
-        "APP帳號設定問題類型",
-        "機台問題類型",
-        "回收點數問題類型",
-        "顧客關係類型",
-        "優惠券問題類型",
-        "APP使用問題類型",
-    ]
-    cat_labels = [
-        "APP帳號設定問題", "機台問題", "回收點數問題",
-        "顧客關係", "優惠券問題", "APP使用問題"
-    ]
-    qt = df_cat["問題類型"].value_counts()
-    cats = []
-    for raw, label in zip(cat_order, cat_labels):
-        cnt = int(qt.get(raw, 0))
-        cats.append({"label": label, "count": cnt,
-                     "pct": round(cnt / total * 100, 1) if total else 0})
+# ================= 5. 機台問題細項（前5 + 其他）=================
+mach = wk[wk["問題類型"] == "機台問題類型"]
+mach_total = len(mach)
+vc_mach = mach["問題細項"].value_counts()
+machIssues = []
+top5 = vc_mach.head(5)
+for name, cnt in top5.items():
+    machIssues.append({"label": name, "count": int(cnt), "pct": round(cnt / mach_total * 100, 1)})
+other = int(vc_mach.iloc[5:].sum())
+if other > 0:
+    machIssues.append({"label": "其他機台問題", "count": other, "pct": round(other / mach_total * 100, 1)})
 
-    # ── 機台 ──
-    bottle = df[df["機台類型"].isin(["收瓶機", "方舟站收瓶機", "方舟站"])]
-    bat    = df[df["機台類型"] == "電池機"]
-    b_cnt  = len(bottle); bat_cnt = len(bat)
-    m_tot  = b_cnt + bat_cnt or 1
+# ================= 6. 收瓶機 / 電池機 Top3（圖示版第二頁用）=================
+bottle = wk[wk["機台類型"].isin(["收瓶機", "方舟站", "方舟站收瓶機"])].copy()
+bat = wk[wk["機台類型"] == "電池機"].copy()
+bottle_total = len(bottle)
+bat_total = len(bat)
+machine_total = bottle_total + bat_total
 
-    # ── 機台問題詳細 (for pie) ──
-    mach = df_cat[df_cat["問題類型"] == "機台問題類型"]
-    mach_vc = mach["簡報使用"].value_counts()
-    top5 = mach_vc.head(5)
-    other_cnt = int(mach_vc[5:].sum())
-    mach_total = len(mach) or 1
-    machIssues = [{"label": k, "count": int(v),
-                   "pct": round(v / mach_total * 100, 1)}
-                  for k, v in top5.items()]
-    machIssues.append({"label": "其他機台問題", "count": other_cnt,
-                       "pct": round(other_cnt / mach_total * 100, 1)})
+bottle["merged"] = bottle["問題細項"].replace({"回收箱滿艙": "滿艙問題（回收箱／寶特瓶）", "寶特瓶滿艙": "滿艙問題（回收箱／寶特瓶）"})
+vc_bottle = bottle["merged"].value_counts()
+bottle_colors = ["FF5000", "060E9F", "0076A9"]
+bottleTop3 = []
+for i, (name, cnt) in enumerate(vc_bottle.head(3).items()):
+    sub = bottle[bottle["merged"] == name]
+    station, scount = top_station(sub)
+    bottleTop3.append({
+        "rank": i + 1, "name": name, "count": int(cnt),
+        "pct": round(cnt / bottle_total * 100, 1) if bottle_total else 0,
+        "col": bottle_colors[i], "station": station, "stationCount": scount,
+    })
 
-    # ── 非機台 Top3 ──
-    nm = df_cat[df_cat["問題類型"] != "機台問題類型"]
-    nm_vc = nm["簡報使用"].value_counts()
-    nm_colors = ["FF5000", "0076A9", "060E9F"]
-    nm_notes  = ["", "", ""]  # 需人工補充說明文字
-    nonMachine = []
-    for i, (k, v) in enumerate(nm_vc.head(3).items()):
-        nonMachine.append({
-            "rank": i + 1, "name": k,
-            "count": int(v),
-            "pct": round(v / total * 100, 1),
-            "col": nm_colors[i],
-            "note": nm_notes[i]
-        })
+vc_bat = bat["問題細項"].value_counts()
+bat_colors = ["FF5000", "060E9F", "0076A9"]
+batTop3 = []
+for i, (name, cnt) in enumerate(vc_bat.head(3).items()):
+    sub = bat[bat["問題細項"] == name]
+    station, scount = top_station(sub)
+    batTop3.append({
+        "rank": i + 1, "name": name, "count": int(cnt),
+        "pct": round(cnt / bat_total * 100, 1) if bat_total else 0,
+        "col": bat_colors[i], "station": station, "stationCount": scount,
+    })
 
-    # ── 收瓶機 Top3 ──
-    b_colors = ["FF5000", "060E9F", "0076A9"]
-    b_vc = bottle["簡報使用"].value_counts()
-    bottleTop3 = [{"name": k, "count": int(v),
-                   "pct": round(v / b_cnt * 100, 0) if b_cnt else 0,
-                   "col": b_colors[i]}
-                  for i, (k, v) in enumerate(b_vc.head(3).items())]
+# ================= 7. 熱點站點（前3區域，各前3站）=================
+top_areas = wk["站點區域"].value_counts().head(3)
+hotAreas = []
+for area, cnt in top_areas.items():
+    sub = wk[wk["站點區域"] == area]
+    spots = []
+    for name, c in sub["站點名稱"].value_counts().head(3).items():
+        spots.append({"name": name, "count": int(c)})
+    hotAreas.append({"area": area, "total": int(cnt), "spots": spots})
 
-    # ── 電池機 Top ──
-    bat_colors = ["0076A9", "8EB8C9"]
-    bat_vc = bat["簡報使用"].value_counts()
-    batTop = [{"name": k, "count": int(v),
-               "pct": round(v / bat_cnt * 100, 0) if bat_cnt else 0,
-               "col": bat_colors[i]}
-              for i, (k, v) in enumerate(bat_vc.head(2).items())]
+# ================= 8. 融合洞察 / 警示文字 =================
+top_login_station, top_login_cnt = top_station(bottle[bottle["問題細項"] == "機台操作畫面無法登入"])
+alertText = (
+    f"【本週融合洞察】收瓶機客訴集中於「滿艙與登入異常」，其中「機台操作畫面無法登入」逾7成集中於 "
+    f"{top_login_station}（{top_login_cnt}件），建議優先派工檢修；電池機客訴則高度集中於「點數未入帳」"
+    f"（{batTop3[0]['pct'] if batTop3 else 0}%），建議排查連線補發機制。"
+)
 
-    # ── 熱點站點（過濾無效區域值：空值、破折號、站點編號如 es0984）──
-    def is_valid_area(v):
-        if not v or str(v).strip() in ["-", "--", "nan", "", "None"]:
-            return False
-        if re.match(r"^[a-zA-Z0-9_\-]+$", str(v).strip()):  # 純英數字 = 站點編號
-            return False
-        if len(str(v).strip()) < 2:
-            return False
-        return True
+# ================= 9. 月低回收量站點（第三頁，六欄：等級／Hive排名／城市／站點名稱／總回收量／MOM排名趨勢）=================
+# 資料來源僅使用 月回收量等級.csv（該檔本身已含「排名」與「區別」(等級 A/B/C) 欄位，不再讀取/比對 收瓶量分析報告.csv）
+vol = pd.read_csv(VOLUME_CSV)
+vol = vol.dropna(subset=["站點名稱"]).copy()
+vol["總量_num"] = vol[" 總量 "].astype(str).str.replace(",", "").astype(float)
+vol = vol.sort_values("總量_num", ascending=True).head(10)
 
-    valid_mask = df["站點區域"].apply(
-        lambda x: is_valid_area(x) if pd.notna(x) else False
-    )
-    area_df  = df[valid_mask]
-    area_top = area_df["站點區域"].value_counts().head(3)
-    hotAreas = []
-    for area, area_cnt in area_top.items():
-        sub = area_df[area_df["站點區域"] == area]["站點名稱"].value_counts().head(3)
-        spots = []
-        for s, c in sub.items():
-            if not s or str(s).strip() in ["-", "nan", "", "None"]:
-                continue
-            zone_code = ""
-            if zone_map:
-                zone_code = zone_map.get(str(s).strip(), "")
-            spots.append({"name": str(s).strip(), "count": int(c), "zone": zone_code})
-        if spots:
-            hotAreas.append({
-                "area": area,
-                "total": int(area_cnt),
-                "spots": spots
-            })
+# 「總排名」母體數：月回收量等級.csv 本身不含全網站點總數，故由 config.json 手動維護，請每月依實際站點數更新
+total_network_stations = CONFIG.get("total_network_stations")
 
-    # ── 加總 ──
-    summary = {
-        "bt": b_cnt, "b2": bat_cnt,
-        "rg": int(qt.get("APP帳號設定問題類型", 0)),
-        "pt": int(qt.get("回收點數問題類型", 0)),
-        "cp": int(qt.get("優惠券問題類型", 0)),
-        "ap": int(qt.get("APP使用問題類型", 0)),
-        "cr": int(qt.get("顧客關係類型", 0)),
-        "tot": total
-    }
+# 讀取／更新排名歷史紀錄（供 MOM 排名趨勢使用；首次執行無比較基準，之後每月自動累積）
+current_month_key = datetime.now().strftime("%Y-%m")
+rank_history = {}
+if os.path.exists(RANK_HISTORY_PATH):
+    with open(RANK_HISTORY_PATH, "r", encoding="utf-8") as f:
+        rank_history = json.load(f)
 
-    return {
-        "total": total,
-        "cats": cats,
-        "machIssues": machIssues,
-        "nonMachine": nonMachine,
-        "bottleTop3": bottleTop3,
-        "batTop": batTop,
-        "bottleTotal": b_cnt, "batTotal": bat_cnt,
-        "bottlePct": round(b_cnt / m_tot * 100),
-        "batPct": round(bat_cnt / m_tot * 100),
-        "hotAreas": hotAreas,
-        "summary": summary,
-        "alertText": ""   # 由人工填寫或後續邏輯自動產生
-    }
+lowVolumeStations = []
+for _, r in vol.iterrows():
+    name = str(r["站點名稱"])
+    grade = str(r["區別"]) if pd.notna(r.get("區別")) else None
+    hive_rank = int(r["排名"]) if pd.notna(r.get("排名")) else None
 
-def build_trend(history, week_num, summary):
-    """取最近4週趨勢（含本週）"""
-    weeks = history.get("weeks", [])
-    # 更新或插入本週
-    existing = next((w for w in weeks if w["week_num"] == week_num), None)
-    if not existing:
-        weeks.append({"week_num": week_num, **summary})
-    else:
-        existing.update(summary)
-    # 排序並取最近4週
-    weeks.sort(key=lambda w: w["week_num"])
-    history["weeks"] = weeks
-    recent4 = weeks[-4:]
+    station_hist = rank_history.get(name, {})
+    prev_months = sorted([m for m in station_hist.keys() if m != current_month_key], reverse=True)
+    mom_trend = None
+    if prev_months and hive_rank is not None:
+        prev_rank = station_hist[prev_months[0]]
+        mom_trend = {"prev_rank": prev_rank, "diff": prev_rank - hive_rank}  # 排名數字變小 = 進步
 
-    trend = []
-    for i, w in enumerate(recent4):
-        prev = recent4[i - 1] if i > 0 else None
-        def delta(key):
-            cur = w.get(key, 0)
-            p   = prev.get(key, 0) if prev else cur
-            return [int(cur), int(cur - p) if prev else 0]
+    if hive_rank is not None:
+        rank_history.setdefault(name, {})[current_month_key] = hive_rank
 
-        wn = w["week_num"]
-        # 推算日期（ISO週）
-        d_start = datetime.fromisocalendar(2026, wn, 1)
-        d_end   = datetime.fromisocalendar(2026, wn, 7)
-        trend.append({
-            "w": f"{wn}週",
-            "d": f"{d_start.strftime('%m/%d')}-{d_end.strftime('%m/%d')}",
-            "bt": delta("bt"), "b2": delta("b2"), "rg": delta("rg"),
-            "pt": delta("pt"), "cp": delta("cp"), "ap": delta("ap"),
-            "cr": delta("cr"), "tot": delta("tot"),
-        })
-    return trend
+    lowVolumeStations.append({
+        "name": name, "city": str(r["所在縣市"]), "contribution": int(r["總量_num"]),
+        "hiveRank": hive_rank, "grade": grade, "momTrend": mom_trend,
+    })
 
-def auto_alert(stats):
-    """自動產生警示文字"""
-    alerts = []
-    for item in stats["nonMachine"][:2]:
-        if item["pct"] >= 10:
-            alerts.append(f"【注意】{item['name']} 持續高位｜本週{item['count']}件（{item['pct']}%）")
-    if stats["bottleTop3"]:
-        top = stats["bottleTop3"][0]
-        if top["pct"] >= 25:
-            alerts.append(f"收瓶機 {top['name']} {top['count']}件（{top['pct']}%）居首，請確認清空頻率")
-    return "。".join(alerts) + "。" if alerts else ""
+with open(RANK_HISTORY_PATH, "w", encoding="utf-8") as f:
+    json.dump(rank_history, f, ensure_ascii=False, indent=2)
 
-def main():
-    cfg = load_config()
-    csv_path = cfg["csv_path"]
-    print(f"[1/4] 載入 CSV：{csv_path}")
-    df = pd.read_csv(csv_path, encoding="utf-8-sig")
-    df = clean_df(df)
+# ================= 10. 頂部四格數據卡（本週 vs 上週 WoW；近28日 vs 前28日 MoM）=================
+wk32, _, _ = week_slice("2026-08-03")  # 上一週（僅供 WoW 比較；若非第33週執行，改用自動判斷）
+# 為配合「上一個完整週」自動判斷，改用相對於 wstart 往前一週
+prev_monday = (wstart - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
+wk_prev, _, _ = week_slice(prev_monday)
+prev_total = len(wk_prev)
 
-    week_label, date_range, week_num, _, _ = get_week_info(df)
-    print(f"[2/4] 分析週次：{week_label}（{date_range}）")
+wow_total_pct = round((total - prev_total) / prev_total * 100, 1) if prev_total else 0
 
-    # 讀取收瓶量分析報告，建立 站點名稱 → 區別 對照表
-    zone_map = {}
-    bottle_report_path = cfg.get("bottle_report_path", "")
-    if bottle_report_path and os.path.exists(bottle_report_path):
-        try:
-            br = pd.read_csv(bottle_report_path, encoding="utf-8-sig")
-            # 嘗試多種可能的欄位名稱
-            name_col = next((c for c in br.columns if "站點名稱" in c or "站點" in c and "名" in c), None)
-            zone_col = next((c for c in br.columns if "區別" in c or "分區" in c or "類別" in c), None)
-            if name_col and zone_col:
-                for _, row in br[[name_col, zone_col]].dropna().iterrows():
-                    zone_map[str(row[name_col]).strip()] = str(row[zone_col]).strip()
-                print(f"  ✅ 讀取收瓶量分析報告：{len(zone_map)} 筆站點區別對照")
-            else:
-                print(f"  ⚠ 收瓶量分析報告欄位未找到（需含「站點名稱」與「區別」欄）")
-                print(f"    現有欄位：{list(br.columns)}")
-        except Exception as e:
-            print(f"  ⚠ 讀取收瓶量分析報告失敗：{e}")
-    else:
-        if bottle_report_path:
-            print(f"  ⚠ 收瓶量分析報告不存在：{bottle_report_path}")
+cur28 = df[(df["dt"] >= wend - pd.Timedelta(days=28)) & (df["dt"] < wend)]
+prev28 = df[(df["dt"] >= wend - pd.Timedelta(days=56)) & (df["dt"] < wend - pd.Timedelta(days=28))]
+mom_total_pct = round((len(cur28) - len(prev28)) / len(prev28) * 100, 1) if len(prev28) else 0
 
-    stats = analyze(df, zone_map)
-    history = load_history()
-    trend = build_trend(history, week_num, stats["summary"])
-    save_history(history)
+# 卡1：本週客訴總件數
+card1 = {
+    "value": total, "prev": prev_total,
+    "diff": total - prev_total,
+    "wow_pct": wow_total_pct,
+}
 
-    stats["alertText"] = auto_alert(stats)
+# 卡2：回報最高主題
+vc_issue = wk["問題細項"].value_counts()
+top_issue_name = vc_issue.index[0]
+top_issue_cnt = int(vc_issue.iloc[0])
+top_issue_share = round(top_issue_cnt / total * 100, 1) if total else 0
+vc_issue_prev = wk_prev["問題細項"].value_counts()
+prev_issue_cnt = int(vc_issue_prev.get(top_issue_name, 0))
+prev_issue_share = round(prev_issue_cnt / prev_total * 100, 1) if prev_total else 0
+card2 = {
+    "name": top_issue_name, "count": top_issue_cnt, "share": top_issue_share,
+    "share_delta": round(top_issue_share - prev_issue_share, 1),
+}
 
-    data = {
-        "week":       week_label,
-        "range":      date_range,
-        "week_num":   week_num,
-        "total":      stats["total"],
-        "cats":       stats["cats"],
-        "trend":      trend,
-        "nonMachine": stats["nonMachine"],
-        "machIssues": stats["machIssues"],
-        "bottleTop3": stats["bottleTop3"],
-        "batTop":     stats["batTop"],
-        "bottleTotal":stats["bottleTotal"],
-        "batTotal":   stats["batTotal"],
-        "bottlePct":  stats["bottlePct"],
-        "batPct":     stats["batPct"],
-        "hotAreas":   stats["hotAreas"],
-        "alertText":  stats["alertText"],
-    }
+# 卡3：客訴量最高站點
+vc_station = wk["站點名稱"].value_counts()
+top_station_name = vc_station.index[0]
+top_station_cnt = int(vc_station.iloc[0])
+top_station_area = wk[wk["站點名稱"] == top_station_name]["站點區域"].dropna()
+top_station_area = top_station_area.iloc[0] if len(top_station_area) else ""
+prev_station_cnt = int((wk_prev["站點名稱"] == top_station_name).sum())
+card3 = {
+    "name": top_station_name, "area": top_station_area, "count": top_station_cnt,
+    "diff": top_station_cnt - prev_station_cnt,
+}
 
-    with open(DATA_OUT, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+# 卡4：非機台問題佔比
+nm_cur = wk[wk["問題類型"] != "機台問題類型"]
+nm_pct = round(len(nm_cur) / total * 100, 1) if total else 0
+nm_prev = wk_prev[wk_prev["問題類型"] != "機台問題類型"]
+nm_prev_pct = round(len(nm_prev) / prev_total * 100, 1) if prev_total else 0
+sample_row = nm_cur.dropna(subset=["用戶內容"]).iloc[0] if len(nm_cur.dropna(subset=["用戶內容"])) else None
+sample_type = sample_row["問題細項"] if sample_row is not None else ""
+card4 = {
+    "pct": nm_pct, "pct_delta": round(nm_pct - nm_prev_pct, 1),
+    "sample_type": sample_type,
+}
 
-    print(f"[3/4] data.json 輸出完成（{stats['total']}件已分類）")
-    print(f"[4/4] 警示：{stats['alertText'] or '無'}")
-    return week_label, date_range
+statCards = {
+    "card1": card1, "card2": card2, "card3": card3, "card4": card4,
+    "wow_total_pct": wow_total_pct, "mom_total_pct": mom_total_pct,
+}
 
-if __name__ == "__main__":
-    main()
+# ================= 輸出 =================
+data = {
+    "week": WEEK_LABEL,
+    "range": range_label,
+    "total": total,
+    "cats": cats,
+    "trend": trend,
+    "nonMachine": nonMachine,
+    "machIssues": machIssues,
+    "bottleTop3": bottleTop3,
+    "batTop3": batTop3,
+    "bottleTotal": bottle_total,
+    "batTotal": bat_total,
+    "machineTotal": machine_total,
+    "bottlePct": round(bottle_total / machine_total * 100, 1) if machine_total else 0,
+    "batPct": round(bat_total / machine_total * 100, 1) if machine_total else 0,
+    "hotAreas": hotAreas,
+    "alertText": alertText,
+    "lowVolumeStations": lowVolumeStations,
+    "totalNetworkStations": total_network_stations,
+    "statCards": statCards,
+    "reportGeneratedDate": datetime.now().strftime("%Y/%m/%d"),
+}
+
+with open("data.json", "w", encoding="utf-8") as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+
+print("完成，總件數：", total)
+print("收瓶機：", bottle_total, "電池機：", bat_total)
+print("低回收量站點筆數：", len(lowVolumeStations))

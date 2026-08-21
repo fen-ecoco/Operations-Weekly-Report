@@ -1,0 +1,7 @@
+{
+  "complaint_csv_path": "D:\\info\\0507_Weekly-Report\\客訴內容分析.csv",
+  "volume_csv_path": "D:\\info\\0507_Weekly-Report\\月回收量等級.csv",
+  "grade_report_path": "D:\\info\\0507_Weekly-Report\\收瓶量分析報告.csv",
+  "total_network_stations": 530,
+  "output_dir": "D:\\info\\0507_Weekly-Report\\Operations-Weekly-Report\\weekly-ppt"
+}
