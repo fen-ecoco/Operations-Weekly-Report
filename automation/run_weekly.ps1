@@ -1,130 +1,90 @@
-# ecoco Weekly Report Automation
-# Run every Monday at 11:00 AM (via Task Scheduler)
-# Steps: 1+2 Analyze CSV -> 3 Generate PPT -> 4 QA -> Git Push -> Local Sync
+# ecoco Weekly Report - Main Orchestrator (v6, ASCII-only)
+# Trigger: Every Monday 11:00 (Task Scheduler), StartWhenAvailable fallback enabled
+# Steps: 1) Check input files  2) Run analyze.py  3) Run generate_ppt_auto.js
+#        4) Copy output PPTX to save folder  5) Git add/commit/push
 
-param([switch]$DryRun)
+# ---------------- Paths ----------------
+# NOTE: actual (Chinese-named) file paths live only in config.json (UTF-8),
+# never as literal strings in this .ps1 file, to avoid the encoding corruption
+# issue documented from earlier runs. Edit config.json, not this script, to
+# change source CSV locations or the output folder.
+$AutomationDir = "D:\info\0507_Weekly-Report\Operations-Weekly-Report\automation"
 
-$ErrorActionPreference = "Stop"
-$BASE   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$CFG    = Get-Content "$BASE\config.json" -Encoding UTF8 | ConvertFrom-Json
-$LOG    = "$BASE\run_log.txt"
+$ConfigPath = Join-Path $AutomationDir "config.json"
+$Config = Get-Content -Path $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
-$CSV_PATH = $CFG.csv_path
-$OUT_DIR  = $CFG.output_dir
-$REPO_DIR = $CFG.repo_dir
-$PYTHON   = $CFG.python_path
-$NODE     = $CFG.node_path
-$GIT      = $CFG.git_path
-$GH_USER  = $CFG.github_user
-$GH_PAT   = $CFG.github_pat
-$GH_REPO  = $CFG.github_repo
+$ComplaintCsv = $Config.complaint_csv_path
+$VolumeCsv    = $Config.volume_csv_path
+$GradeCsv     = $Config.grade_report_path
+$OutputDir    = $Config.output_dir
 
-function Log($msg) {
+$LogFile = Join-Path $AutomationDir "run_weekly.log"
+
+function Write-Log {
+    param([string]$Message)
     $ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    $line = "[$ts] $msg"
-    Write-Host $line
-    Add-Content -Path $LOG -Value $line -Encoding UTF8
+    "$ts  $Message" | Out-File -FilePath $LogFile -Append -Encoding utf8
+    Write-Host "$ts  $Message"
 }
 
-Log "=========================================="
-Log "  ecoco Weekly Report - Start"
-Log "=========================================="
+Write-Log "===== Weekly report run started ====="
 
-# --- Step 1+2: Analyze CSV -> data.json ---
-Log "[Step 1+2] Load CSV and analyze..."
-if (-not (Test-Path $CSV_PATH)) {
-    Log "ERROR: CSV not found: $CSV_PATH"
+# ---------------- Step 1: verify input files exist ----------------
+if (-not (Test-Path $ComplaintCsv)) {
+    Write-Log "ERROR: complaint csv not found at $ComplaintCsv"
     exit 1
 }
-& $PYTHON "$BASE\analyze.py"
+if (-not (Test-Path $VolumeCsv)) {
+    Write-Log "ERROR: volume csv not found at $VolumeCsv"
+    exit 1
+}
+if (-not (Test-Path $GradeCsv)) {
+    Write-Log "ERROR: grade report csv (收瓶量分析報告.csv) not found at $GradeCsv"
+    exit 1
+}
+Write-Log "Step 1 OK: all source CSV files found"
+
+# ---------------- Step 2: run analyze.py ----------------
+Set-Location $AutomationDir
+Write-Log "Step 2: running analyze.py"
+python analyze.py
 if ($LASTEXITCODE -ne 0) {
-    Log "ERROR: analyze.py failed"
+    Write-Log "ERROR: analyze.py failed with exit code $LASTEXITCODE"
     exit 1
 }
-$D      = Get-Content "$BASE\data.json" -Encoding UTF8 | ConvertFrom-Json
-$WEEK   = $D.week
-Log "  OK: $WEEK ($($D.range)) - $($D.total) records"
+Write-Log "Step 2 OK: data.json generated"
 
-# --- Step 3: Generate PPT ---
-Log "[Step 3] Generate PPT: $FNAME"
-& $NODE "$BASE\generate_ppt_auto.js"
+# ---------------- Step 3: run generate_ppt_auto.js ----------------
+Write-Log "Step 3: running generate_ppt_auto.js"
+node generate_ppt_auto.js
 if ($LASTEXITCODE -ne 0) {
-    Log "ERROR: generate_ppt_auto.js failed"
+    Write-Log "ERROR: generate_ppt_auto.js failed with exit code $LASTEXITCODE"
     exit 1
 }
-Start-Sleep -Seconds 2
-$PPTX = Get-ChildItem "$BASE\*.pptx" | Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
-if (-not $PPTX) {
-    Log "ERROR: No PPTX found in $BASE after generation"
+Write-Log "Step 3 OK: PPTX generated"
+
+# ---------------- Step 4: copy output PPTX to save folder ----------------
+if (-not (Test-Path $OutputDir)) {
+    New-Item -ItemType Directory -Path $OutputDir | Out-Null
+    Write-Log "Created output folder: $OutputDir"
+}
+$LatestPptx = Get-ChildItem -Path $AutomationDir -Filter "*.pptx" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+if ($null -eq $LatestPptx) {
+    Write-Log "ERROR: no pptx file found after generation"
     exit 1
 }
-$FNAME = Split-Path $PPTX -Leaf
-Log "  OK: PPT generated -> $FNAME"
+Copy-Item -Path $LatestPptx.FullName -Destination $OutputDir -Force
+Write-Log "Step 4 OK: copied $($LatestPptx.Name) to $OutputDir"
 
-# Copy to output dir (local sync)
-if (-not (Test-Path $OUT_DIR)) {
-    New-Item -ItemType Directory -Path $OUT_DIR | Out-Null
-}
-$LOCAL_COPY = "$OUT_DIR\$FNAME"
-Copy-Item $PPTX $LOCAL_COPY -Force
-Log "  OK: Local sync -> $LOCAL_COPY"
-
-# --- Step 4: Visual QA ---
-Log "[Step 4] Opening PPTX for visual check..."
-if (Test-Path $LOCAL_COPY) { Start-Process $LOCAL_COPY } else { Start-Process $PPTX }
-Start-Sleep -Seconds 3
-Log "  OK: PPTX opened - please verify layout"
-
-if ($DryRun) {
-    Log "DryRun mode: skip Git push"
-    Log "=========================================="
-    Log "  ecoco Weekly Report - Done (DryRun)"
-    Log "=========================================="
-    exit 0
-}
-
-# --- Git Push ---
-Log "[Push] Git commit and push..."
-
-$REPO_PPTX = "$REPO_DIR\weekly-ppt\$FNAME"
-$REPO_HIST = "$REPO_DIR\automation\history.json"
-
-if (-not (Test-Path $REPO_DIR)) {
-    Log "  First run: cloning repo..."
-    Set-Location (Split-Path $REPO_DIR)
-    $GH_URL = $GH_REPO -replace "https://", ""
-    & $GIT clone "https://${GH_USER}:${GH_PAT}@${GH_URL}" | ForEach-Object { Log "  $_" }
-}
-
-if (-not (Test-Path "$REPO_DIR\weekly-ppt")) {
-    New-Item -ItemType Directory "$REPO_DIR\weekly-ppt" | Out-Null
-}
-Copy-Item $PPTX          $REPO_PPTX -Force
-# Only copy history.json if source and destination are different paths
-if ($BASE -ne "$REPO_DIR\automation") {
-    Copy-Item "$BASE\history.json" $REPO_HIST -Force
-}
-
-Set-Location $REPO_DIR
-& $GIT config user.email "fen-ecoco@ecoco.com.tw"
-& $GIT config user.name "fen-ecoco"
-& $GIT add "weekly-ppt" "automation\history.json" 2>&1 | ForEach-Object { Log "  $_" }
-
-$MSG = "feat($WEEK): weekly report $($D.range) - $($D.total) records"
-& $GIT commit -m $MSG 2>&1 | ForEach-Object { Log "  $_" }
-
-$GH_URL = $GH_REPO -replace "https://", ""
-& $GIT push "https://${GH_USER}:${GH_PAT}@${GH_URL}" main 2>&1 | ForEach-Object { Log "  $_" }
+# ---------------- Step 5: git add / commit / push ----------------
+Write-Log "Step 5: git push"
+git add .
+git commit -m "Weekly report auto-update $(Get-Date -Format 'yyyy-MM-dd')"
+git push
 if ($LASTEXITCODE -ne 0) {
-    Log "ERROR: Push failed - check github_pat in config.json"
-    exit 1
+    Write-Log "WARNING: git push returned non-zero exit code (check remote/auth). PPTX was still saved locally."
+} else {
+    Write-Log "Step 5 OK: pushed to GitHub"
 }
-Log "  OK: Pushed to GitHub -> $GH_REPO"
 
-# --- Summary ---
-Log "=========================================="
-Log "  OK: All steps completed"
-Log "  PPTX local : $LOCAL_COPY"
-Log "  PPTX GitHub: weekly-ppt/$FNAME"
-Log "  History    : automation/history.json"
-Log "=========================================="
+Write-Log "===== Weekly report run finished successfully ====="

@@ -6,6 +6,7 @@ ecoco 客服週報 - 資料分析腳本 (v6)
 """
 import json
 import os
+import re
 from datetime import datetime, timedelta
 import pandas as pd
 
@@ -36,6 +37,7 @@ WEEK_LABEL = f"第{_week_num}週"
 
 # ================= 1. 讀取與清理 =================
 df = pd.read_csv(COMPLAINT_CSV)
+df.columns = df.columns.str.strip()
 df["機台類型"] = df["機台類型"].astype(str).str.strip().replace({"nan": None})
 df["問題類型"] = df["問題類型"].astype(str).str.strip()
 
@@ -51,6 +53,7 @@ df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce")
 grade_df = None
 if GRADE_CSV and os.path.exists(GRADE_CSV):
     grade_df = pd.read_csv(GRADE_CSV)
+    grade_df.columns = grade_df.columns.str.strip()
 
 
 def lookup_grade(station_name):
@@ -208,14 +211,29 @@ alertText = (
 )
 
 # ================= 9. 月低回收量站點（第三頁，六欄：等級／Hive排名／城市／站點名稱／總回收量／MOM排名趨勢）=================
-# 資料來源僅使用 月回收量等級.csv（該檔本身已含「排名」與「區別」(等級 A/B/C) 欄位，不再讀取/比對 收瓶量分析報告.csv）
+# 資料來源僅使用 月回收量等級.csv。該檔案本身已是預先整理好的六欄改善清單，欄位固定為：
+#   等級 / Hive排名(總排名NNN) / 城市 / 站點名稱 / 總回收量(瓶) / MOM排名趨勢 / 週別
+# 「總排名」的數字（NNN）內嵌在欄位名稱裡、每月手動更新，程式會自動從欄名解析出來，不需另外維護。
+# 「MOM排名趨勢」欄位本身留空，實際趨勢由 rank_history.json 每月自動累積計算（見下方）。
+# 「週別」欄位不使用。
 vol = pd.read_csv(VOLUME_CSV)
+vol.columns = vol.columns.str.strip()
 vol = vol.dropna(subset=["站點名稱"]).copy()
-vol["總量_num"] = vol[" 總量 "].astype(str).str.replace(",", "").astype(float)
-vol = vol.sort_values("總量_num", ascending=True).head(10)
 
-# 「總排名」母體數：月回收量等級.csv 本身不含全網站點總數，故由 config.json 手動維護，請每月依實際站點數更新
-total_network_stations = CONFIG.get("total_network_stations")
+hive_rank_col = next((c for c in vol.columns if c.startswith("Hive排名")), None)
+volume_col = next((c for c in vol.columns if c.replace(" ", "").startswith("總回收量")), None)
+if hive_rank_col is None or volume_col is None:
+    raise KeyError(
+        f"找不到「Hive排名(...)」或「總回收量(...)」欄位，請確認 {VOLUME_CSV} 的欄位名稱。"
+        f"目前讀到的欄位為：{list(vol.columns)}"
+    )
+
+rank_match = re.search(r"(\d+)", hive_rank_col)
+total_network_stations = int(rank_match.group(1)) if rank_match else CONFIG.get("total_network_stations")
+
+vol["總量_num"] = vol[volume_col].astype(str).str.replace(",", "").str.strip().astype(float)
+vol["排名_num"] = vol[hive_rank_col].astype(str).str.replace("#", "").str.strip().astype(int)
+vol = vol.sort_values("總量_num", ascending=True).head(10)
 
 # 讀取／更新排名歷史紀錄（供 MOM 排名趨勢使用；首次執行無比較基準，之後每月自動累積）
 current_month_key = datetime.now().strftime("%Y-%m")
@@ -227,21 +245,20 @@ if os.path.exists(RANK_HISTORY_PATH):
 lowVolumeStations = []
 for _, r in vol.iterrows():
     name = str(r["站點名稱"])
-    grade = str(r["區別"]) if pd.notna(r.get("區別")) else None
-    hive_rank = int(r["排名"]) if pd.notna(r.get("排名")) else None
+    grade = str(r["等級"]) if pd.notna(r.get("等級")) else None
+    hive_rank = int(r["排名_num"])
 
     station_hist = rank_history.get(name, {})
     prev_months = sorted([m for m in station_hist.keys() if m != current_month_key], reverse=True)
     mom_trend = None
-    if prev_months and hive_rank is not None:
+    if prev_months:
         prev_rank = station_hist[prev_months[0]]
         mom_trend = {"prev_rank": prev_rank, "diff": prev_rank - hive_rank}  # 排名數字變小 = 進步
 
-    if hive_rank is not None:
-        rank_history.setdefault(name, {})[current_month_key] = hive_rank
+    rank_history.setdefault(name, {})[current_month_key] = hive_rank
 
     lowVolumeStations.append({
-        "name": name, "city": str(r["所在縣市"]), "contribution": int(r["總量_num"]),
+        "name": name, "city": str(r["城市"]), "contribution": int(r["總量_num"]),
         "hiveRank": hive_rank, "grade": grade, "momTrend": mom_trend,
     })
 

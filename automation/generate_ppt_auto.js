@@ -391,7 +391,7 @@ function buildSlide3() {
     fill: { color: 'F5F7FF' }, line: { color: C.lightBlue, width: 0.75 },
   });
   slide.addText([
-    { text: '資料來源：Hive，站點貢獻程度以月回收量分級(最近 30 天塑膠＋鋁罐回收量)（前34%是A，中間33%是B，後面33%是C）。', options: { color: C.darkGray, fontSize: 9.5, fontFace: F_MED } },
+    { text: '資料來源：Hive，站點貢獻程度以月回收量分級(最近 30 天塑膠＋鋁罐回收量) (前34%是A,中間33%是B,後面33%是C)', options: { color: C.darkGray, fontSize: 9.5, fontFace: F_MED } },
   ], {
     x: 0.65, y: noteY2, w: tW - 0.5, h: 0.6, valign: 'middle', margin: 0, lineSpacingMultiple: 1.15,
   });
