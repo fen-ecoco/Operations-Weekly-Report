@@ -24,3 +24,21 @@
 2026-08-21 12:28:47  Step 3 OK: PPTX generated
 2026-08-21 12:28:47  Step 4 OK: copied ecoco_客服週報_第33週_0810~0816.pptx to D:\info\0507_Weekly-Report\Operations-Weekly-Report\weekly-ppt
 2026-08-21 12:28:47  Step 5: git push
+2026-08-21 12:28:50  Step 5 OK: pushed to GitHub
+2026-08-21 12:28:50  ===== Weekly report run finished successfully =====
+2026-08-24 11:00:06  ===== Weekly report run started =====
+2026-08-24 11:00:06  Step 1 OK: all source CSV files found
+2026-08-24 11:00:06  Step 2: running analyze.py
+2026-08-24 11:00:11  ERROR: analyze.py failed with exit code 1
+2026-08-25 08:39:54  ===== Weekly report run started =====
+2026-08-25 08:39:54  Step 1 OK: all source CSV files found
+2026-08-25 08:39:54  Step 2: running analyze.py
+2026-08-25 08:39:58  ERROR: analyze.py failed with exit code 1
+2026-08-25 08:44:09  ===== Weekly report run started =====
+2026-08-25 08:44:09  Step 1 OK: all source CSV files found
+2026-08-25 08:44:09  Step 2: running analyze.py
+2026-08-25 08:44:10  Step 2 OK: data.json generated
+2026-08-25 08:44:10  Step 3: running generate_ppt_auto.js
+2026-08-25 08:44:12  Step 3 OK: PPTX generated
+2026-08-25 08:44:12  Step 4 OK: copied ecoco_客服週報_第34週_0817~0823.pptx to D:\info\0507_Weekly-Report\Operations-Weekly-Report\weekly-ppt
+2026-08-25 08:44:12  Step 5: git push

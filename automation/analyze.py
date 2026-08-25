@@ -50,10 +50,18 @@ df["問題細項"] = df["問題細項"].replace(label_map)
 df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce")
 
 # 讀取「收瓶量分析報告.csv」：全台站點等級(A/B/C)＋排名，供第二頁站點等級標示使用（第三頁已改為僅用 月回收量等級.csv，不再依賴此檔）
+# 這份檔案只影響第二頁的等級標示（錦上添花），格式若有出入絕不能讓整份週報無法產出，因此以下全程防呆處理。
 grade_df = None
 if GRADE_CSV and os.path.exists(GRADE_CSV):
-    grade_df = pd.read_csv(GRADE_CSV)
-    grade_df.columns = grade_df.columns.str.strip()
+    try:
+        _tmp = pd.read_csv(GRADE_CSV)
+        _tmp.columns = _tmp.columns.str.strip()
+        if "站點名稱" in _tmp.columns and "等級" in _tmp.columns:
+            grade_df = _tmp
+        else:
+            print(f"警告：{GRADE_CSV} 缺少「站點名稱」或「等級」欄位（目前欄位：{list(_tmp.columns)}），本次第二頁將不顯示站點等級。")
+    except Exception as e:
+        print(f"警告：讀取 {GRADE_CSV} 失敗（{e}），本次第二頁將不顯示站點等級。")
 
 
 def lookup_grade(station_name):
