@@ -64,3 +64,13 @@
 2026-08-27 11:09:27  Step 3 OK: PPTX generated
 2026-08-27 11:09:27  Step 4 OK: copied ecoco_客服週報_第34週_0817~0823.pptx to D:\info\0507_Weekly-Report\Operations-Weekly-Report\weekly-ppt
 2026-08-27 11:09:27  Step 5: git push
+2026-08-27 11:09:30  Step 5 OK: pushed to GitHub
+2026-08-27 11:09:30  ===== Weekly report run finished successfully =====
+2026-08-27 11:39:37  ===== Weekly report run started =====
+2026-08-27 11:39:37  Step 1 OK: all source files found
+2026-08-27 11:39:37  Step 2: running analyze.py
+2026-08-27 11:39:37  Step 2 OK: data.json generated
+2026-08-27 11:39:37  Step 3: running generate_ppt_auto.js
+2026-08-27 11:39:38  Step 3 OK: PPTX generated
+2026-08-27 11:39:38  Step 4 OK: copied ecoco_客服週報_第34週_0817~0823.pptx to D:\info\0507_Weekly-Report\Operations-Weekly-Report\weekly-ppt
+2026-08-27 11:39:38  Step 5: git push

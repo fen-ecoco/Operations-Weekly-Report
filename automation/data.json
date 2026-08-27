@@ -449,34 +449,54 @@
   "gradeTiers": [
     {
       "grade": "S",
+      "bonus": 18,
+      "badge": "S+18",
       "range": "17,000瓶以上"
     },
     {
       "grade": "A",
+      "bonus": 12,
+      "badge": "A+12",
       "range": "13,300～16,999瓶"
     },
     {
       "grade": "B",
+      "bonus": 8,
+      "badge": "B+8",
       "range": "11,100～13,299瓶"
     },
     {
       "grade": "C",
+      "bonus": 4,
+      "badge": "C+4",
       "range": "9,000～11,099瓶"
     },
     {
       "grade": "D",
+      "bonus": 2,
+      "badge": "D+2",
       "range": "6,900～8,999瓶"
     },
     {
       "grade": "E",
+      "bonus": 1,
+      "badge": "E+1",
       "range": "4,100～6,899瓶"
     },
     {
       "grade": "F",
+      "bonus": 0,
+      "badge": "F+0",
       "range": "4,100瓶以下"
+    },
+    {
+      "grade": "ARK",
+      "bonus": 8,
+      "badge": "ARK+8",
+      "range": "3台有效收瓶機"
     }
   ],
-  "arkNote": "ARK/3台有效收瓶機/+8",
+  "tierSectionLabel": "等級+加分/瓶量：",
   "statCards": {
     "card1": {
       "value": 61,

@@ -305,17 +305,18 @@ DEFAULT_DATA_SOURCE_TEXT = (
     "三台以上有效收瓶機獨立列為 ARK。"
 )
 DEFAULT_GRADE_TIERS = [
-    {"grade": "S", "range": "17,000瓶以上"},
-    {"grade": "A", "range": "13,300～16,999瓶"},
-    {"grade": "B", "range": "11,100～13,299瓶"},
-    {"grade": "C", "range": "9,000～11,099瓶"},
-    {"grade": "D", "range": "6,900～8,999瓶"},
-    {"grade": "E", "range": "4,100～6,899瓶"},
-    {"grade": "F", "range": "4,100瓶以下"},
+    {"grade": "S", "bonus": 18, "badge": "S+18", "range": "17,000瓶以上"},
+    {"grade": "A", "bonus": 12, "badge": "A+12", "range": "13,300～16,999瓶"},
+    {"grade": "B", "bonus": 8, "badge": "B+8", "range": "11,100～13,299瓶"},
+    {"grade": "C", "bonus": 4, "badge": "C+4", "range": "9,000～11,099瓶"},
+    {"grade": "D", "bonus": 2, "badge": "D+2", "range": "6,900～8,999瓶"},
+    {"grade": "E", "bonus": 1, "badge": "E+1", "range": "4,100～6,899瓶"},
+    {"grade": "F", "bonus": 0, "badge": "F+0", "range": "4,100瓶以下"},
+    {"grade": "ARK", "bonus": 8, "badge": "ARK+8", "range": "3台有效收瓶機"},
 ]
 dataSourceNote = DEFAULT_DATA_SOURCE_TEXT
 gradeTiers = DEFAULT_GRADE_TIERS
-arkNote = "三台以上有效收瓶機獨立列為 ARK（額外+8分）"
+tierSectionLabel = "等級+加分/瓶量："
 
 if DATA_SOURCE_MD and os.path.exists(DATA_SOURCE_MD):
     try:
@@ -326,10 +327,10 @@ if DATA_SOURCE_MD and os.path.exists(DATA_SOURCE_MD):
             dataSourceNote = first_line
 
         # 動態解析「等級/瓶量/加分」門檻，例如： S /17000~/+18 。A/13300~16999/+12。...
-        tier_pattern = r"([A-Z])\s*/\s*([\d,]*)~([\d,]*)/\+(\d+)"
+        tier_pattern = r"([A-Z])\s*/\s*([\d,]*)\\?~([\d,]*)/\+(\d+)"
         matches = re.findall(tier_pattern, md_text)
+        parsed_tiers = []
         if matches:
-            parsed_tiers = []
             for g, lo, hi, bonus in matches:
                 if lo and hi:
                     rng = f"{int(lo):,}～{int(hi):,}瓶"
@@ -339,12 +340,17 @@ if DATA_SOURCE_MD and os.path.exists(DATA_SOURCE_MD):
                     rng = f"{int(hi):,}瓶以下"
                 else:
                     rng = ""
-                parsed_tiers.append({"grade": g, "range": rng})
-            gradeTiers = parsed_tiers
+                parsed_tiers.append({"grade": g, "bonus": int(bonus), "badge": f"{g}+{bonus}", "range": rng})
 
-        ark_match = re.search(r"級別/特殊加分[：:]\s*(.+)", md_text)
+        # 解析 ARK 特殊加分，例如：ARK/3台有效收瓶機/+8 -> 比照 S~F 同樣的「等級+分數／描述」呈現方式
+        ark_match = re.search(r"ARK\s*/\s*([^/]+?)\s*/\s*\+(\d+)", md_text)
         if ark_match:
-            arkNote = ark_match.group(1).strip()
+            ark_desc = ark_match.group(1).strip()
+            ark_bonus = int(ark_match.group(2))
+            parsed_tiers.append({"grade": "ARK", "bonus": ark_bonus, "badge": f"ARK+{ark_bonus}", "range": ark_desc})
+
+        if parsed_tiers:
+            gradeTiers = parsed_tiers
     except Exception as e:
         print(f"警告：讀取 {DATA_SOURCE_MD} 失敗（{e}），第三頁資料來源說明改用內建預設文字。")
 
@@ -431,7 +437,7 @@ data = {
     "totalNetworkStations": total_network_stations,
     "dataSourceNote": dataSourceNote,
     "gradeTiers": gradeTiers,
-    "arkNote": arkNote,
+    "tierSectionLabel": tierSectionLabel,
     "statCards": statCards,
     "reportGeneratedDate": datetime.now().strftime("%Y/%m/%d"),
     "dataPeriodLabel": f"{(datetime.now() - timedelta(days=30)).strftime('%Y/%m/%d')}-{datetime.now().strftime('%m/%d')}",

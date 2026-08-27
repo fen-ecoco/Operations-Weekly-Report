@@ -432,17 +432,21 @@ function buildSlide3() {
     fill: { color: 'F5F7FF' }, line: { color: C.lightBlue, width: 0.75 },
   });
   slide.addText(D.dataSourceNote, {
-    x: 0.65, y: noteY2 + 0.1, w: tW - 0.5, h: 0.28,
+    x: 0.65, y: noteY2 + 0.08, w: tW - 0.5, h: 0.26,
     fontFace: F_MED, fontSize: 9.5, color: C.darkGray, valign: 'middle', margin: 0,
   });
+  slide.addText(D.tierSectionLabel || '等級+加分/瓶量：', {
+    x: 0.65, y: noteY2 + 0.35, w: 3, h: 0.22,
+    fontFace: F_BOLD, fontSize: 9, bold: true, color: C.blue, valign: 'middle', margin: 0,
+  });
 
-  // 等級門檻徽章列（S～F），平均分配寬度避免溢出
-  const tierGradeColor = { S: C.orange, A: C.darkBlue, B: C.blue, C: '4F86A0', D: C.textGray, E: C.textGray, F: C.textGray };
+  // 等級＋加分／瓶量 徽章列（S～F＋ARK 共8格，同一種呈現方式，平均分配寬度避免溢出）
+  const tierGradeColor = { S: C.orange, A: C.darkBlue, B: C.blue, C: '4F86A0', D: C.textGray, E: C.textGray, F: C.textGray, ARK: '9C7A00' };
   const tiers = D.gradeTiers || [];
   const legendAreaW = tW - 0.5;
   const slotW = tiers.length ? legendAreaW / tiers.length : legendAreaW;
-  const legendY = noteY2 + 0.44;
-  const chipW = 0.32, chipH = 0.24;
+  const legendY = noteY2 + 0.60;
+  const chipW = 0.55, chipH = 0.24;
   tiers.forEach((t, i) => {
     const tc = tierGradeColor[t.grade] || C.textGray;
     const slotX = 0.65 + i * slotW;
@@ -450,19 +454,14 @@ function buildSlide3() {
       x: slotX, y: legendY, w: chipW, h: chipH, rectRadius: chipH / 2,
       fill: { color: tc, transparency: 85 }, line: { color: tc, width: 0.75 },
     });
-    slide.addText(t.grade, {
+    slide.addText(t.badge || t.grade, {
       x: slotX, y: legendY, w: chipW, h: chipH,
-      fontFace: F_BOLD, fontSize: 9, bold: true, color: tc, align: 'center', valign: 'middle', margin: 0,
+      fontFace: F_BOLD, fontSize: 8.5, bold: true, color: tc, align: 'center', valign: 'middle', margin: 0,
     });
     slide.addText(t.range, {
-      x: slotX + chipW + 0.05, y: legendY, w: slotW - chipW - 0.08, h: chipH,
-      fontFace: F_MED, fontSize: 7.5, color: C.textGray, valign: 'middle', margin: 0,
+      x: slotX + chipW + 0.04, y: legendY, w: slotW - chipW - 0.06, h: chipH,
+      fontFace: F_MED, fontSize: 7, color: C.textGray, valign: 'middle', margin: 0,
     });
-  });
-
-  slide.addText(`※ ${D.arkNote || ''}`, {
-    x: 0.65, y: noteY2 + 0.76, w: tW - 0.5, h: 0.24,
-    fontFace: F_MED, fontSize: 8.5, color: C.textGray, valign: 'middle', margin: 0,
   });
 }
 
