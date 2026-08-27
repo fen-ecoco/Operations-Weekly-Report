@@ -36,67 +36,35 @@
   ],
   "trend": [
     {
-      "w": "第30週",
-      "d": "07/20-07/26",
-      "app_acc": [
-        6,
-        0
-      ],
-      "machine": [
-        118,
-        0
-      ],
-      "points": [
-        20,
-        0
-      ],
-      "customer": [
-        26,
-        0
-      ],
-      "coupon": [
-        12,
-        0
-      ],
-      "app_use": [
-        4,
-        0
-      ],
-      "tot": [
-        186,
-        0
-      ]
-    },
-    {
       "w": "第31週",
       "d": "07/27-08/02",
       "app_acc": [
         3,
-        -3
+        0
       ],
       "machine": [
         106,
-        -12
+        0
       ],
       "points": [
         11,
-        -9
+        0
       ],
       "customer": [
         20,
-        -6
+        0
       ],
       "coupon": [
         11,
-        -1
+        0
       ],
       "app_use": [
         8,
-        4
+        0
       ],
       "tot": [
         159,
-        -27
+        0
       ]
     },
     {
@@ -132,35 +100,67 @@
       ]
     },
     {
+      "w": "第33週",
+      "d": "08/10-08/16",
+      "app_acc": [
+        0,
+        -3
+      ],
+      "machine": [
+        100,
+        -6
+      ],
+      "points": [
+        20,
+        7
+      ],
+      "customer": [
+        33,
+        14
+      ],
+      "coupon": [
+        10,
+        4
+      ],
+      "app_use": [
+        2,
+        -8
+      ],
+      "tot": [
+        165,
+        8
+      ]
+    },
+    {
       "w": "第34週",
-      "d": "08/17 ~ 08/23",
+      "d": "08/17-08/23",
       "app_acc": [
         2,
-        -1
+        2
       ],
       "machine": [
         34,
-        -72
+        -66
       ],
       "points": [
         4,
-        -9
+        -16
       ],
       "customer": [
         16,
-        -3
+        -17
       ],
       "coupon": [
         2,
-        -4
+        -8
       ],
       "app_use": [
         3,
-        -7
+        1
       ],
       "tot": [
         61,
-        -96
+        -104
       ]
     }
   ],
@@ -229,7 +229,7 @@
       "count": 16,
       "pct": 38.1,
       "col": "FF5000",
-      "station": "桃園/全聯福利中心大溪員林店站",
+      "station": "A｜桃園/全聯福利中心大溪員林店站",
       "stationCount": 2
     },
     {
@@ -238,7 +238,7 @@
       "count": 5,
       "pct": 11.9,
       "col": "060E9F",
-      "station": "臺南/全聯福利中心仁德德安店站",
+      "station": "D｜臺南/全聯福利中心仁德德安店站",
       "stationCount": 2
     },
     {
@@ -247,7 +247,7 @@
       "count": 3,
       "pct": 7.1,
       "col": "0076A9",
-      "station": "桃園/全聯福利中心平鎮新富店站",
+      "station": "A｜桃園/全聯福利中心平鎮新富店站",
       "stationCount": 1
     }
   ],
@@ -258,7 +258,7 @@
       "count": 2,
       "pct": 33.3,
       "col": "FF5000",
-      "station": "臺南/全家台南萬年店站",
+      "station": "E｜臺南/全家台南萬年店站",
       "stationCount": 2
     },
     {
@@ -267,7 +267,7 @@
       "count": 1,
       "pct": 16.7,
       "col": "060E9F",
-      "station": "臺中/全聯福利中心台中中平店站",
+      "station": "D｜臺中/全聯福利中心台中中平店站",
       "stationCount": 1
     },
     {
@@ -276,7 +276,7 @@
       "count": 1,
       "pct": 16.7,
       "col": "0076A9",
-      "station": "高雄/億進寢具鳳屏店站",
+      "station": "C｜高雄/億進寢具鳳屏店站",
       "stationCount": 1
     }
   ],
@@ -341,90 +341,142 @@
       ]
     }
   ],
-  "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙與登入異常」，其中「機台操作畫面無法登入」逾7成集中於 臺中/全聯福利中心台中大昌店站（1件），建議優先派工檢修；電池機客訴則高度集中於「點數未入帳」（33.3%），建議排查連線補發機制。",
+  "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（38.1%，16件），最高回報站點為 A｜桃園/全聯福利中心大溪員林店站（2件），建議優先派工檢修；電池機客訴則集中於「辨識失敗異常或錯誤」（33.3%，2件），建議持續追蹤。",
   "lowVolumeStations": [
+    {
+      "name": "衛生福利部雙和醫院第一醫療大樓站",
+      "city": "新北",
+      "contribution": 0,
+      "hiveRank": 530,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": "租賃"
+    },
     {
       "name": "南山高中大中一樓站",
       "city": "新北",
-      "contribution": 362,
-      "hiveRank": 555,
-      "grade": "C",
-      "momTrend": null
-    },
-    {
-      "name": "Global Mall 環球新左營車站",
-      "city": "高雄",
-      "contribution": 734,
-      "hiveRank": 553,
-      "grade": "C",
-      "momTrend": null
-    },
-    {
-      "name": "合橫國民小學站",
-      "city": "澎湖",
-      "contribution": 788,
-      "hiveRank": 552,
-      "grade": "C",
-      "momTrend": null
+      "contribution": 0,
+      "hiveRank": 531,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
     },
     {
       "name": "成功大學光復第二宿舍站",
       "city": "臺南",
-      "contribution": 863,
-      "hiveRank": 551,
-      "grade": "C",
-      "momTrend": null
-    },
-    {
-      "name": "成功大學芸青軒學生活動中心(二)站",
-      "city": "臺南",
-      "contribution": 1136,
-      "hiveRank": 547,
-      "grade": "C",
-      "momTrend": null
-    },
-    {
-      "name": "全聯福利中心林內中正店站",
-      "city": "雲林",
-      "contribution": 1352,
-      "hiveRank": 546,
-      "grade": "C",
-      "momTrend": null
-    },
-    {
-      "name": "特力屋大順店站",
-      "city": "高雄",
-      "contribution": 1458,
-      "hiveRank": 545,
-      "grade": "C",
-      "momTrend": null
+      "contribution": 934,
+      "hiveRank": 516,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-4",
+      "leaseType": "租賃"
     },
     {
       "name": "全聯福利中心屏東瑞民店站",
       "city": "屏東",
-      "contribution": 1461,
-      "hiveRank": 544,
-      "grade": "C",
-      "momTrend": null
+      "contribution": 1075,
+      "hiveRank": 515,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-4",
+      "leaseType": null
     },
     {
-      "name": "台南歸仁測試快閃站",
+      "name": "全聯福利中心總部大樓站",
+      "city": "臺北",
+      "contribution": 1600,
+      "hiveRank": 514,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-4",
+      "leaseType": null
+    },
+    {
+      "name": "健美洋行南一中體育館站",
       "city": "臺南",
-      "contribution": 1492,
-      "hiveRank": 543,
-      "grade": "C",
-      "momTrend": null
+      "contribution": 1622,
+      "hiveRank": 513,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-HD",
+      "leaseType": null
     },
     {
       "name": "成功大學學生活動中心(一)站",
       "city": "臺南",
-      "contribution": 1601,
-      "hiveRank": 542,
-      "grade": "C",
-      "momTrend": null
+      "contribution": 1729,
+      "hiveRank": 512,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-4",
+      "leaseType": "租賃"
+    },
+    {
+      "name": "全聯福利中心右昌店站",
+      "city": "高雄",
+      "contribution": 1753,
+      "hiveRank": 511,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-4",
+      "leaseType": null
+    },
+    {
+      "name": "全聯福利中心彰化田中店站",
+      "city": "彰化",
+      "contribution": 1766,
+      "hiveRank": 510,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-HD",
+      "leaseType": null
+    },
+    {
+      "name": "全聯福利中心三民十全三店站",
+      "city": "高雄",
+      "contribution": 1852,
+      "hiveRank": 509,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "AI-HD",
+      "leaseType": null
     }
   ],
-  "totalNetworkStations": 563,
+  "totalNetworkStations": 542,
+  "dataSourceNote": "資料來源：Hive，一般站依近 30 個台灣日曆日實際清運的塑膠＋鋁罐瓶數分 S～F；三台以上有效收瓶機獨立列為 ARK",
+  "gradeTiers": [
+    {
+      "grade": "S",
+      "range": "17,000瓶以上"
+    },
+    {
+      "grade": "A",
+      "range": "13,300～16,999瓶"
+    },
+    {
+      "grade": "B",
+      "range": "11,100～13,299瓶"
+    },
+    {
+      "grade": "C",
+      "range": "9,000～11,099瓶"
+    },
+    {
+      "grade": "D",
+      "range": "6,900～8,999瓶"
+    },
+    {
+      "grade": "E",
+      "range": "4,100～6,899瓶"
+    },
+    {
+      "grade": "F",
+      "range": "4,100瓶以下"
+    }
+  ],
+  "arkNote": "ARK/3台有效收瓶機/+8",
   "statCards": {
     "card1": {
       "value": 61,
@@ -452,5 +504,6 @@
     "wow_total_pct": -63.0,
     "mom_total_pct": -11.7
   },
-  "reportGeneratedDate": "2026/08/25"
+  "reportGeneratedDate": "2026/08/26",
+  "dataPeriodLabel": "2026/07/27-08/26"
 }

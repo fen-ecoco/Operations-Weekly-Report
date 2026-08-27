@@ -339,61 +339,130 @@ function buildSlide3() {
     x: 0.58, y: 0.16, w: 9, h: 0.48,
     fontFace: F_BLACK, fontSize: 19, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
   });
-  slide.addText(`Hive 站點回收量貢獻／排名（總 ${D.totalNetworkStations ?? '－'} 站）`, {
-    x: 9.0, y: 0.2, w: 3.9, h: 0.3,
-    fontFace: F_BOLD, fontSize: 10.5, bold: true, color: C.darkBlue, align: 'right', margin: 0,
-  });
-  slide.addText(`資料更新日期：${D.reportGeneratedDate}`, {
-    x: 9.0, y: 0.48, w: 3.9, h: 0.26,
-    fontFace: F_MED, fontSize: 9, color: C.textGray, align: 'right', margin: 0,
+  slide.addText(`資料更新日期：${D.reportGeneratedDate}（區間${D.dataPeriodLabel}）`, {
+    x: 7.3, y: 0.28, w: 5.6, h: 0.32,
+    fontFace: F_BOLD, fontSize: 11, bold: true, color: C.darkBlue, align: 'right', margin: 0,
   });
 
-  // table：等級／Hive排名／城市／站點名稱／總回收量／MOM排名趨勢
-  const tX = 0.4, tY = 0.95, tW = PW - 0.8;
-  const cw = [0.95, 2.12, 1.23, 3.96, 2.12, 2.12];
-  const gradeColor = { A: C.orange, B: C.darkBlue, C: C.textGray };
-  const headerCells = ['等級', `Hive排名\n（總${D.totalNetworkStations ?? '－'}）`, '城市', '站點名稱', '總回收量（瓶）', 'MOM排名趨勢'].map(t => ({
-    text: t, options: { fill: { color: C.blue }, color: C.white, bold: true, fontFace: F_BOLD, fontSize: 11, align: 'center', valign: 'middle' },
+  // table：等級／Hive排名／縣市／站點名稱／機型／租賃買斷／近30日合計(瓶)／月增減率
+  const tX = 0.4, tY = 0.85, tW = PW - 0.8;
+  const cw = [0.75, 1.5, 1.0, 2.65, 1.5, 1.7, 1.8, 1.6];
+  const headerH = 0.5, dataRowH = 0.42;
+  const gradeColor = { S: C.orange, A: C.darkBlue, B: C.blue, C: '4F86A0', D: C.textGray, E: C.textGray, F: C.textGray, ARK: '9C7A00' };
+  const headerCells = ['等級', `Hive排名\n（總${D.totalNetworkStations ?? '－'}）`, '縣市', '站點名稱', '機型', '租賃/買斷', '近30日合計（瓶）', '月增減率'].map(t => ({
+    text: t, options: { fill: { color: C.blue }, color: C.white, bold: true, fontFace: F_BOLD, fontSize: 10.5, align: 'center', valign: 'middle' },
   }));
   const rows = [headerCells];
   D.lowVolumeStations.forEach((s, i) => {
     const rowFill = i % 2 === 0 ? 'FFFFFF' : 'F7F7F9';
     const g = s.grade;
     let momCell;
-    if (!s.momTrend) {
+    if (!s.momChange) {
       momCell = { text: '－（首次記錄）', options: { fill: { color: rowFill }, color: C.textGray, fontFace: F_MED, fontSize: 9.5, align: 'center', valign: 'middle' } };
     } else {
-      const diff = s.momTrend.diff;
-      if (diff > 0) momCell = { text: `↑進步 ${diff} 名`, options: { fill: { color: rowFill }, color: C.darkBlue, bold: true, fontFace: F_BOLD, fontSize: 10.5, align: 'center', valign: 'middle' } };
-      else if (diff < 0) momCell = { text: `↓退步 ${Math.abs(diff)} 名`, options: { fill: { color: rowFill }, color: C.orange, bold: true, fontFace: F_BOLD, fontSize: 10.5, align: 'center', valign: 'middle' } };
+      const pct = s.momChange.pct;
+      if (pct > 0) momCell = { text: `▲${pct}%`, options: { fill: { color: rowFill }, color: C.darkBlue, bold: true, fontFace: F_BOLD, fontSize: 11, align: 'center', valign: 'middle' } };
+      else if (pct < 0) momCell = { text: `▼${Math.abs(pct)}%`, options: { fill: { color: rowFill }, color: C.orange, bold: true, fontFace: F_BOLD, fontSize: 11, align: 'center', valign: 'middle' } };
       else momCell = { text: '持平', options: { fill: { color: rowFill }, color: C.textGray, fontFace: F_MED, fontSize: 10.5, align: 'center', valign: 'middle' } };
     }
     rows.push([
-      { text: g || '－', options: { fill: { color: rowFill }, color: g ? gradeColor[g] : C.textGray, bold: true, fontFace: F_BLACK, fontSize: 14, align: 'center', valign: 'middle' } },
+      { text: g || '－', options: { fill: { color: rowFill }, color: g ? (gradeColor[g] || C.textGray) : C.textGray, bold: true, fontFace: F_BLACK, fontSize: 13, align: 'center', valign: 'middle' } },
       { text: s.hiveRank ? `第 ${s.hiveRank} 名` : '－', options: { fill: { color: rowFill }, color: C.textGray, fontFace: F_MED, fontSize: 10.5, align: 'center', valign: 'middle' } },
       { text: s.city, options: { fill: { color: rowFill }, color: C.darkGray, fontFace: F_MED, fontSize: 11, align: 'center', valign: 'middle' } },
-      { text: s.name, options: { fill: { color: rowFill }, color: C.darkGray, bold: true, fontFace: F_BOLD, fontSize: 11.5, align: 'left', valign: 'middle' } },
+      { text: s.name, options: { fill: { color: rowFill }, color: C.darkGray, bold: true, fontFace: F_BOLD, fontSize: 11, align: 'left', valign: 'middle' } },
+      { text: '', options: { fill: { color: rowFill } } }, // 機型：改由徽章 (badge) 覆蓋繪製
+      { text: '', options: { fill: { color: rowFill } } }, // 租賃/買斷：改由徽章 (badge) 覆蓋繪製
       { text: `${s.contribution.toLocaleString()}`, options: { fill: { color: rowFill }, color: C.darkBlue, bold: true, fontFace: F_BOLD, fontSize: 12, align: 'center', valign: 'middle' } },
       momCell,
     ]);
   });
 
   slide.addTable(rows, {
-    x: tX, y: tY, w: tW, colW: cw, rowH: 0.42,
+    x: tX, y: tY, w: tW, colW: cw, rowH: [headerH, ...Array(D.lowVolumeStations.length).fill(dataRowH)],
     border: { type: 'solid', color: 'E5E5E5', pt: 0.5 },
     autoPage: false,
   });
 
-  // 資料範圍說明
-  const noteY2 = tY + 0.42 * (rows.length) + 0.22;
+  // ---- 機型／租賃買斷 徽章 (badge) 覆蓋繪製 ----
+  const machineColors = { 'H30': C.orange, 'AI-4': C.blue, 'AI-HD': C.darkBlue, 'AI': '4F86A0' };
+  const colX_machine = tX + cw[0] + cw[1] + cw[2] + cw[3];
+  const colX_lease = colX_machine + cw[4];
+
+  D.lowVolumeStations.forEach((s, i) => {
+    const rowY = tY + headerH + i * dataRowH;
+    const rowCenterY = rowY + dataRowH / 2;
+
+    // 機型 badge：實心淺色底（帶透明度）＋同色細邊框＋全圓角膠囊
+    if (s.machineType) {
+      const mColor = machineColors[s.machineType] || C.textGray;
+      const bw = 1.05, bh = 0.28;
+      const bx = colX_machine + (cw[4] - bw) / 2, by = rowCenterY - bh / 2;
+      slide.addShape('roundRect', {
+        x: bx, y: by, w: bw, h: bh, rectRadius: bh / 2,
+        fill: { color: mColor, transparency: 85 }, line: { color: mColor, width: 1 },
+      });
+      slide.addText(s.machineType, {
+        x: bx, y: by, w: bw, h: bh,
+        fontFace: F_BOLD, fontSize: 10, bold: true, color: mColor, align: 'center', valign: 'middle', margin: 0,
+      });
+    }
+
+    // 租賃/買斷 badge：白底＋細邊框膠囊＋圖示（🔑租賃／💰買斷）
+    if (s.leaseType) {
+      const isLease = s.leaseType.includes('租賃');
+      const bw = 1.3, bh = 0.28;
+      const bx = colX_lease + (cw[5] - bw) / 2, by = rowCenterY - bh / 2;
+      slide.addShape('roundRect', {
+        x: bx, y: by, w: bw, h: bh, rectRadius: bh / 2,
+        fill: { color: 'FFFFFF' }, line: { color: C.blue, width: 1 },
+      });
+      slide.addImage({ path: ICON(isLease ? 'key_blue' : 'coins_blue'), x: bx + 0.14, y: by + 0.06, w: 0.16, h: 0.16 });
+      slide.addText(s.leaseType, {
+        x: bx + 0.32, y: by, w: bw - 0.4, h: bh,
+        fontFace: F_BOLD, fontSize: 10, bold: true, color: C.blue, align: 'left', valign: 'middle', margin: 0,
+      });
+    }
+  });
+
+  // ---- 資料來源說明（取自 資料來源.md，以徽章列呈現等級門檻，方便一目瞭然）----
+  const noteY2 = tY + headerH + dataRowH * D.lowVolumeStations.length + 0.22;
+  const noteH = 1.05;
   slide.addShape('roundRect', {
-    x: 0.4, y: noteY2, w: tW, h: 0.6, rectRadius: 0.06,
+    x: 0.4, y: noteY2, w: tW, h: noteH, rectRadius: 0.06,
     fill: { color: 'F5F7FF' }, line: { color: C.lightBlue, width: 0.75 },
   });
-  slide.addText([
-    { text: '資料來源：Hive，站點貢獻程度以月回收量分級(最近 30 天塑膠＋鋁罐回收量) (前34%是A,中間33%是B,後面33%是C)', options: { color: C.darkGray, fontSize: 9.5, fontFace: F_MED } },
-  ], {
-    x: 0.65, y: noteY2, w: tW - 0.5, h: 0.6, valign: 'middle', margin: 0, lineSpacingMultiple: 1.15,
+  slide.addText(D.dataSourceNote, {
+    x: 0.65, y: noteY2 + 0.1, w: tW - 0.5, h: 0.28,
+    fontFace: F_MED, fontSize: 9.5, color: C.darkGray, valign: 'middle', margin: 0,
+  });
+
+  // 等級門檻徽章列（S～F），平均分配寬度避免溢出
+  const tierGradeColor = { S: C.orange, A: C.darkBlue, B: C.blue, C: '4F86A0', D: C.textGray, E: C.textGray, F: C.textGray };
+  const tiers = D.gradeTiers || [];
+  const legendAreaW = tW - 0.5;
+  const slotW = tiers.length ? legendAreaW / tiers.length : legendAreaW;
+  const legendY = noteY2 + 0.44;
+  const chipW = 0.32, chipH = 0.24;
+  tiers.forEach((t, i) => {
+    const tc = tierGradeColor[t.grade] || C.textGray;
+    const slotX = 0.65 + i * slotW;
+    slide.addShape('roundRect', {
+      x: slotX, y: legendY, w: chipW, h: chipH, rectRadius: chipH / 2,
+      fill: { color: tc, transparency: 85 }, line: { color: tc, width: 0.75 },
+    });
+    slide.addText(t.grade, {
+      x: slotX, y: legendY, w: chipW, h: chipH,
+      fontFace: F_BOLD, fontSize: 9, bold: true, color: tc, align: 'center', valign: 'middle', margin: 0,
+    });
+    slide.addText(t.range, {
+      x: slotX + chipW + 0.05, y: legendY, w: slotW - chipW - 0.08, h: chipH,
+      fontFace: F_MED, fontSize: 7.5, color: C.textGray, valign: 'middle', margin: 0,
+    });
+  });
+
+  slide.addText(`※ ${D.arkNote || ''}`, {
+    x: 0.65, y: noteY2 + 0.76, w: tW - 0.5, h: 0.24,
+    fontFace: F_MED, fontSize: 8.5, color: C.textGray, valign: 'middle', margin: 0,
   });
 }
 

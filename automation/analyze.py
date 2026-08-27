@@ -17,8 +17,8 @@ with open(os.path.join(SCRIPT_DIR, "config.json"), "r", encoding="utf-8") as f:
 
 COMPLAINT_CSV = CONFIG["complaint_csv_path"]
 VOLUME_CSV = CONFIG["volume_csv_path"]
-GRADE_CSV = CONFIG.get("grade_report_path")  # 收瓶量分析報告.csv：全台站點等級(A/B/C)＋排名，每月更新
-RANK_HISTORY_PATH = os.path.join(SCRIPT_DIR, "rank_history.json")
+RANK_HISTORY_PATH = os.path.join(SCRIPT_DIR, "volume_history.json")
+DATA_SOURCE_MD = CONFIG.get("data_source_md_path")  # 資料來源.md：等級計算說明，顯示於第三頁下方
 
 # ---------- 週次設定：預設自動抓取「上一個完整週」(週一~週日) ----------
 # 若要手動指定其他週次，將下方兩行取消註解並填入日期即可覆蓋自動判斷
@@ -49,25 +49,25 @@ label_map = {
 df["問題細項"] = df["問題細項"].replace(label_map)
 df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce")
 
-# 讀取「收瓶量分析報告.csv」：全台站點等級(A/B/C)＋排名，供第二頁站點等級標示使用（第三頁已改為僅用 月回收量等級.csv，不再依賴此檔）
-# 這份檔案只影響第二頁的等級標示（錦上添花），格式若有出入絕不能讓整份週報無法產出，因此以下全程防呆處理。
-grade_df = None
-if GRADE_CSV and os.path.exists(GRADE_CSV):
+# 讀取「月回收量等級.csv」：全台站點等級（ARK/S~F）＋排名，供第二頁站點等級標示、第三頁改善清單共用
+# 這份檔案的欄位在合作過程中改過幾次，為避免格式再變動時整份週報中斷，以下全程防呆處理。
+vol_master_df = None
+if VOLUME_CSV and os.path.exists(VOLUME_CSV):
     try:
-        _tmp = pd.read_csv(GRADE_CSV)
+        _tmp = pd.read_csv(VOLUME_CSV)
         _tmp.columns = _tmp.columns.str.strip()
         if "站點名稱" in _tmp.columns and "等級" in _tmp.columns:
-            grade_df = _tmp
+            vol_master_df = _tmp
         else:
-            print(f"警告：{GRADE_CSV} 缺少「站點名稱」或「等級」欄位（目前欄位：{list(_tmp.columns)}），本次第二頁將不顯示站點等級。")
+            print(f"警告：{VOLUME_CSV} 缺少「站點名稱」或「等級」欄位（目前欄位：{list(_tmp.columns)}），本次第二頁將不顯示站點等級。")
     except Exception as e:
-        print(f"警告：讀取 {GRADE_CSV} 失敗（{e}），本次第二頁將不顯示站點等級。")
+        print(f"警告：讀取 {VOLUME_CSV} 失敗（{e}），本次第二頁將不顯示站點等級。")
 
 
 def lookup_grade(station_name):
-    if grade_df is None:
+    if vol_master_df is None:
         return None
-    match = grade_df[grade_df["站點名稱"] == station_name]
+    match = vol_master_df[vol_master_df["站點名稱"] == station_name]
     return str(match.iloc[0]["等級"]) if len(match) else None
 
 CATS_ORDER = [
@@ -113,12 +113,19 @@ for label, key in CATS_ORDER:
     cats.append({"label": label, "count": c, "pct": round(c / total * 100, 1) if total else 0})
 
 # ================= 3. 近4週趨勢 =================
-WEEKS_TREND = [
-    ("第30週", "07/20-07/26", "2026-07-20"),
-    ("第31週", "07/27-08/02", "2026-07-27"),
-    ("第32週", "08/03-08/09", "2026-08-03"),
-    (WEEK_LABEL, range_label, WEEK_START),
-]
+# 動態計算「近4週」= 本週往前推 3、2、1 週 + 本週，避免寫死日期導致跨週執行時對不上（例如自動判斷週次已推進，但趨勢表仍卡在舊的固定週次）
+def week_label(monday_ts):
+    wn = monday_ts.isocalendar()[1]
+    sunday_ts = monday_ts + pd.Timedelta(days=6)
+    rng = f"{monday_ts.strftime('%m/%d')}-{sunday_ts.strftime('%m/%d')}"
+    return f"第{wn}週", rng
+
+WEEKS_TREND = []
+for offset in [3, 2, 1, 0]:
+    monday_ts = wstart - pd.Timedelta(days=7 * offset)
+    wl, rng = week_label(monday_ts)
+    WEEKS_TREND.append((wl, rng, monday_ts.strftime("%Y-%m-%d")))
+
 trend_raw = []
 for wl, rng, monday in WEEKS_TREND:
     twk, _, _ = week_slice(monday)
@@ -210,29 +217,43 @@ for area, cnt in top_areas.items():
         spots.append({"name": name, "count": int(c)})
     hotAreas.append({"area": area, "total": int(cnt), "spots": spots})
 
-# ================= 8. 融合洞察 / 警示文字 =================
-top_login_station, top_login_cnt = top_station(bottle[bottle["問題細項"] == "機台操作畫面無法登入"])
-alertText = (
-    f"【本週融合洞察】收瓶機客訴集中於「滿艙與登入異常」，其中「機台操作畫面無法登入」逾7成集中於 "
-    f"{top_login_station}（{top_login_cnt}件），建議優先派工檢修；電池機客訴則高度集中於「點數未入帳」"
-    f"（{batTop3[0]['pct'] if batTop3 else 0}%），建議排查連線補發機制。"
-)
+# ================= 8. 融合洞察 / 警示文字（依當週實際 Top1 動態生成，避免寫死特定問題名稱）=================
+if bottleTop3:
+    b1 = bottleTop3[0]
+    if b1["station"]:
+        bottle_insight = (
+            f"收瓶機客訴集中於「{b1['name']}」（{b1['pct']}%，{b1['count']}件），"
+            f"最高回報站點為 {b1['station']}（{b1['stationCount']}件），建議優先派工檢修"
+        )
+    else:
+        bottle_insight = f"收瓶機客訴集中於「{b1['name']}」（{b1['pct']}%，{b1['count']}件），建議優先派工檢修"
+else:
+    bottle_insight = "本週收瓶機無客訴紀錄"
 
-# ================= 9. 月低回收量站點（第三頁，六欄：等級／Hive排名／城市／站點名稱／總回收量／MOM排名趨勢）=================
-# 資料來源僅使用 月回收量等級.csv。該檔案本身已是預先整理好的六欄改善清單，欄位固定為：
-#   等級 / Hive排名(總排名NNN) / 城市 / 站點名稱 / 總回收量(瓶) / MOM排名趨勢 / 週別
-# 「總排名」的數字（NNN）內嵌在欄位名稱裡、每月手動更新，程式會自動從欄名解析出來，不需另外維護。
-# 「MOM排名趨勢」欄位本身留空，實際趨勢由 rank_history.json 每月自動累積計算（見下方）。
-# 「週別」欄位不使用。
-vol = pd.read_csv(VOLUME_CSV)
-vol.columns = vol.columns.str.strip()
+if batTop3:
+    b2 = batTop3[0]
+    battery_insight = f"電池機客訴則集中於「{b2['name']}」（{b2['pct']}%，{b2['count']}件），建議持續追蹤"
+else:
+    battery_insight = "本週電池機無客訴紀錄"
+
+alertText = f"【本週融合洞察】{bottle_insight}；{battery_insight}。"
+
+# ================= 9. 月低回收量站點（第三頁）=================
+# 資料來源僅使用 月回收量等級.csv 整份文件（525+ 站全量），欄位包含：
+#   等級 / Hive排名(總NNN) / 縣市 / 站點名稱 / 機型 / 租賃/買斷 / 近30日合計(瓶) / 月增減率 / 活動期間 / 週別
+# 「活動期間」「週別」不顯示。「總NNN」母體數自動從欄名解析。
+# 「月增減率」欄位本身不採用來源檔的值，改由 volume_history.json 每月自動累積比對「近30日合計(瓶)」計算（見下方）。
+if vol_master_df is None:
+    raise KeyError(f"無法讀取 {VOLUME_CSV}，請確認檔案存在且含「站點名稱」「等級」欄位。")
+vol = vol_master_df.copy()
 vol = vol.dropna(subset=["站點名稱"]).copy()
 
 hive_rank_col = next((c for c in vol.columns if c.startswith("Hive排名")), None)
-volume_col = next((c for c in vol.columns if c.replace(" ", "").startswith("總回收量")), None)
-if hive_rank_col is None or volume_col is None:
+volume_col = next((c for c in vol.columns if "近30日合計" in c or c.replace(" ", "").startswith("總回收量")), None)
+city_col = "縣市" if "縣市" in vol.columns else ("城市" if "城市" in vol.columns else None)
+if hive_rank_col is None or volume_col is None or city_col is None:
     raise KeyError(
-        f"找不到「Hive排名(...)」或「總回收量(...)」欄位，請確認 {VOLUME_CSV} 的欄位名稱。"
+        f"找不到「Hive排名(...)」「近30日合計(瓶)」或「縣市/城市」欄位，請確認 {VOLUME_CSV} 的欄位名稱。"
         f"目前讀到的欄位為：{list(vol.columns)}"
     )
 
@@ -240,42 +261,95 @@ rank_match = re.search(r"(\d+)", hive_rank_col)
 total_network_stations = int(rank_match.group(1)) if rank_match else CONFIG.get("total_network_stations")
 
 vol["總量_num"] = vol[volume_col].astype(str).str.replace(",", "").str.strip().astype(float)
-vol["排名_num"] = vol[hive_rank_col].astype(str).str.replace("#", "").str.strip().astype(int)
 vol = vol.sort_values("總量_num", ascending=True).head(10)
 
-# 讀取／更新排名歷史紀錄（供 MOM 排名趨勢使用；首次執行無比較基準，之後每月自動累積）
+# 讀取／更新「近30日合計(瓶)」歷史紀錄（供月增減率使用；首次執行無比較基準，之後每月自動累積）
 current_month_key = datetime.now().strftime("%Y-%m")
-rank_history = {}
+volume_history = {}
 if os.path.exists(RANK_HISTORY_PATH):
     with open(RANK_HISTORY_PATH, "r", encoding="utf-8") as f:
-        rank_history = json.load(f)
+        volume_history = json.load(f)
 
 lowVolumeStations = []
 for _, r in vol.iterrows():
     name = str(r["站點名稱"])
     grade = str(r["等級"]) if pd.notna(r.get("等級")) else None
-    hive_rank = int(r["排名_num"])
+    hive_rank = int(r[hive_rank_col]) if pd.notna(r.get(hive_rank_col)) else None
+    machine_type = str(r["機型"]).strip() if pd.notna(r.get("機型")) else None
+    lease_type = str(r["租賃/買斷"]).strip() if pd.notna(r.get("租賃/買斷")) else None
+    cur_volume = r["總量_num"]
 
-    station_hist = rank_history.get(name, {})
+    station_hist = volume_history.get(name, {})
     prev_months = sorted([m for m in station_hist.keys() if m != current_month_key], reverse=True)
-    mom_trend = None
+    mom_change = None
     if prev_months:
-        prev_rank = station_hist[prev_months[0]]
-        mom_trend = {"prev_rank": prev_rank, "diff": prev_rank - hive_rank}  # 排名數字變小 = 進步
+        prev_volume = station_hist[prev_months[0]]
+        if prev_volume:
+            pct = round((cur_volume - prev_volume) / prev_volume * 100, 1)
+            mom_change = {"prev_volume": prev_volume, "pct": pct}
 
-    rank_history.setdefault(name, {})[current_month_key] = hive_rank
+    volume_history.setdefault(name, {})[current_month_key] = cur_volume
 
     lowVolumeStations.append({
-        "name": name, "city": str(r["城市"]), "contribution": int(r["總量_num"]),
-        "hiveRank": hive_rank, "grade": grade, "momTrend": mom_trend,
+        "name": name, "city": str(r[city_col]), "contribution": int(cur_volume),
+        "hiveRank": hive_rank, "grade": grade, "momChange": mom_change,
+        "machineType": machine_type, "leaseType": lease_type,
     })
 
 with open(RANK_HISTORY_PATH, "w", encoding="utf-8") as f:
-    json.dump(rank_history, f, ensure_ascii=False, indent=2)
+    json.dump(volume_history, f, ensure_ascii=False, indent=2)
+
+# 第三頁下方「資料來源」說明：取用 資料來源.md 內容（若找不到或格式不符則用內建預設文字，確保不中斷）
+DEFAULT_DATA_SOURCE_TEXT = (
+    "資料來源：Hive，一般站依近30個台灣日曆日實際清運的塑膠＋鋁罐瓶數分級（S～F）；"
+    "三台以上有效收瓶機獨立列為 ARK。"
+)
+DEFAULT_GRADE_TIERS = [
+    {"grade": "S", "range": "17,000瓶以上"},
+    {"grade": "A", "range": "13,300～16,999瓶"},
+    {"grade": "B", "range": "11,100～13,299瓶"},
+    {"grade": "C", "range": "9,000～11,099瓶"},
+    {"grade": "D", "range": "6,900～8,999瓶"},
+    {"grade": "E", "range": "4,100～6,899瓶"},
+    {"grade": "F", "range": "4,100瓶以下"},
+]
+dataSourceNote = DEFAULT_DATA_SOURCE_TEXT
+gradeTiers = DEFAULT_GRADE_TIERS
+arkNote = "三台以上有效收瓶機獨立列為 ARK（額外+8分）"
+
+if DATA_SOURCE_MD and os.path.exists(DATA_SOURCE_MD):
+    try:
+        with open(DATA_SOURCE_MD, "r", encoding="utf-8") as f:
+            md_text = f.read()
+        first_line = next((ln.strip() for ln in md_text.splitlines() if ln.strip()), None)
+        if first_line:
+            dataSourceNote = first_line
+
+        # 動態解析「等級/瓶量/加分」門檻，例如： S /17000~/+18 。A/13300~16999/+12。...
+        tier_pattern = r"([A-Z])\s*/\s*([\d,]*)~([\d,]*)/\+(\d+)"
+        matches = re.findall(tier_pattern, md_text)
+        if matches:
+            parsed_tiers = []
+            for g, lo, hi, bonus in matches:
+                if lo and hi:
+                    rng = f"{int(lo):,}～{int(hi):,}瓶"
+                elif lo and not hi:
+                    rng = f"{int(lo):,}瓶以上"
+                elif hi and not lo:
+                    rng = f"{int(hi):,}瓶以下"
+                else:
+                    rng = ""
+                parsed_tiers.append({"grade": g, "range": rng})
+            gradeTiers = parsed_tiers
+
+        ark_match = re.search(r"級別/特殊加分[：:]\s*(.+)", md_text)
+        if ark_match:
+            arkNote = ark_match.group(1).strip()
+    except Exception as e:
+        print(f"警告：讀取 {DATA_SOURCE_MD} 失敗（{e}），第三頁資料來源說明改用內建預設文字。")
+
 
 # ================= 10. 頂部四格數據卡（本週 vs 上週 WoW；近28日 vs 前28日 MoM）=================
-wk32, _, _ = week_slice("2026-08-03")  # 上一週（僅供 WoW 比較；若非第33週執行，改用自動判斷）
-# 為配合「上一個完整週」自動判斷，改用相對於 wstart 往前一週
 prev_monday = (wstart - pd.Timedelta(days=7)).strftime("%Y-%m-%d")
 wk_prev, _, _ = week_slice(prev_monday)
 prev_total = len(wk_prev)
@@ -355,8 +429,12 @@ data = {
     "alertText": alertText,
     "lowVolumeStations": lowVolumeStations,
     "totalNetworkStations": total_network_stations,
+    "dataSourceNote": dataSourceNote,
+    "gradeTiers": gradeTiers,
+    "arkNote": arkNote,
     "statCards": statCards,
     "reportGeneratedDate": datetime.now().strftime("%Y/%m/%d"),
+    "dataPeriodLabel": f"{(datetime.now() - timedelta(days=30)).strftime('%Y/%m/%d')}-{datetime.now().strftime('%m/%d')}",
 }
 
 with open("data.json", "w", encoding="utf-8") as f:

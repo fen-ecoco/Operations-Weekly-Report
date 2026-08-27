@@ -4,7 +4,8 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-const { FaRecycle, FaCarBattery, FaMapMarkerAlt, FaExclamationTriangle, FaChartBar, FaHeadset, FaUserCog, FaChartLine } = require('react-icons/fa');
+const { FaRecycle, FaCarBattery, FaMapMarkerAlt, FaExclamationTriangle, FaChartBar, FaHeadset, FaUserCog, FaChartLine, FaKey } = require('react-icons/fa');
+const { LuCoins } = require('react-icons/lu');
 
 const OUT_DIR = path.join(__dirname, 'icons');
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR);
@@ -39,4 +40,6 @@ async function makeIcon(Comp, name, color, size = 256) {
   await makeIcon(FaMapMarkerAlt, 'pin_darkblue', '0076A9');
   await makeIcon(FaUserCog, 'usercog_gold', 'B8860B');
   await makeIcon(FaChartLine, 'chartline_white', 'FFFFFF');
+  await makeIcon(FaKey, 'key_blue', '060E9F');
+  await makeIcon(LuCoins, 'coins_blue', '060E9F');
 })();

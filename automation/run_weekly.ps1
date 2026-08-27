@@ -15,7 +15,7 @@ $Config = Get-Content -Path $ConfigPath -Raw -Encoding UTF8 | ConvertFrom-Json
 
 $ComplaintCsv = $Config.complaint_csv_path
 $VolumeCsv    = $Config.volume_csv_path
-$GradeCsv     = $Config.grade_report_path
+$DataSourceMd = $Config.data_source_md_path
 $OutputDir    = $Config.output_dir
 
 $LogFile = Join-Path $AutomationDir "run_weekly.log"
@@ -38,11 +38,11 @@ if (-not (Test-Path $VolumeCsv)) {
     Write-Log "ERROR: volume csv not found at $VolumeCsv"
     exit 1
 }
-if (-not (Test-Path $GradeCsv)) {
-    Write-Log "ERROR: grade report csv (收瓶量分析報告.csv) not found at $GradeCsv"
+if (-not (Test-Path $DataSourceMd)) {
+    Write-Log "ERROR: data source md (資料來源.md) not found at $DataSourceMd"
     exit 1
 }
-Write-Log "Step 1 OK: all source CSV files found"
+Write-Log "Step 1 OK: all source files found"
 
 # ---------------- Step 2: run analyze.py ----------------
 Set-Location $AutomationDir
