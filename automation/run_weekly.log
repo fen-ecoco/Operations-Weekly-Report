@@ -50,3 +50,17 @@
 2026-08-26 17:06:28  Step 2 OK: data.json generated
 2026-08-26 17:06:28  Step 3: running generate_ppt_auto.js
 2026-08-26 17:06:30  ERROR: generate_ppt_auto.js failed with exit code 1
+2026-08-27 11:05:48  ===== Weekly report run started =====
+2026-08-27 11:05:48  Step 1 OK: all source files found
+2026-08-27 11:05:48  Step 2: running analyze.py
+2026-08-27 11:05:49  Step 2 OK: data.json generated
+2026-08-27 11:05:49  Step 3: running generate_ppt_auto.js
+2026-08-27 11:05:51  ERROR: generate_ppt_auto.js failed with exit code 1
+2026-08-27 11:09:26  ===== Weekly report run started =====
+2026-08-27 11:09:26  Step 1 OK: all source files found
+2026-08-27 11:09:26  Step 2: running analyze.py
+2026-08-27 11:09:27  Step 2 OK: data.json generated
+2026-08-27 11:09:27  Step 3: running generate_ppt_auto.js
+2026-08-27 11:09:27  Step 3 OK: PPTX generated
+2026-08-27 11:09:27  Step 4 OK: copied ecoco_客服週報_第34週_0817~0823.pptx to D:\info\0507_Weekly-Report\Operations-Weekly-Report\weekly-ppt
+2026-08-27 11:09:27  Step 5: git push
