@@ -1,72 +1,40 @@
 {
-  "week": "第34週",
-  "range": "08/17 ~ 08/23",
-  "total": 61,
+  "week": "第35週",
+  "range": "08/24 ~ 08/30",
+  "total": 76,
   "cats": [
     {
       "label": "APP帳號設定問題",
-      "count": 2,
-      "pct": 3.3
+      "count": 3,
+      "pct": 3.9
     },
     {
       "label": "機台問題",
-      "count": 34,
-      "pct": 55.7
+      "count": 42,
+      "pct": 55.3
     },
     {
       "label": "回收點數問題",
-      "count": 4,
-      "pct": 6.6
+      "count": 8,
+      "pct": 10.5
     },
     {
       "label": "顧客關係",
-      "count": 16,
-      "pct": 26.2
+      "count": 17,
+      "pct": 22.4
     },
     {
       "label": "優惠券問題",
       "count": 2,
-      "pct": 3.3
+      "pct": 2.6
     },
     {
       "label": "APP使用問題",
-      "count": 3,
-      "pct": 4.9
+      "count": 4,
+      "pct": 5.3
     }
   ],
   "trend": [
-    {
-      "w": "第31週",
-      "d": "07/27-08/02",
-      "app_acc": [
-        3,
-        0
-      ],
-      "machine": [
-        106,
-        0
-      ],
-      "points": [
-        11,
-        0
-      ],
-      "customer": [
-        20,
-        0
-      ],
-      "coupon": [
-        11,
-        0
-      ],
-      "app_use": [
-        8,
-        0
-      ],
-      "tot": [
-        159,
-        0
-      ]
-    },
     {
       "w": "第32週",
       "d": "08/03-08/09",
@@ -80,23 +48,23 @@
       ],
       "points": [
         13,
-        2
+        0
       ],
       "customer": [
         19,
-        -1
+        0
       ],
       "coupon": [
         6,
-        -5
+        0
       ],
       "app_use": [
         10,
-        2
+        0
       ],
       "tot": [
         157,
-        -2
+        0
       ]
     },
     {
@@ -162,30 +130,62 @@
         61,
         -104
       ]
+    },
+    {
+      "w": "第35週",
+      "d": "08/24-08/30",
+      "app_acc": [
+        3,
+        1
+      ],
+      "machine": [
+        42,
+        8
+      ],
+      "points": [
+        8,
+        4
+      ],
+      "customer": [
+        17,
+        1
+      ],
+      "coupon": [
+        2,
+        0
+      ],
+      "app_use": [
+        4,
+        1
+      ],
+      "tot": [
+        76,
+        15
+      ]
     }
   ],
   "nonMachine": [
     {
       "rank": 1,
       "name": "其他建議",
-      "count": 7,
-      "pct": 11.5,
+      "count": 11,
+      "pct": 14.5,
       "col": "FF5000",
       "note": ""
     },
     {
       "rank": 2,
-      "name": "許願新增站點/設站建議",
-      "count": 4,
-      "pct": 6.6,
+      "name": "點數未入帳號",
+      "count": 8,
+      "pct": 10.5,
       "col": "0076A9",
       "note": ""
     },
     {
       "rank": 3,
-      "name": "點數未入帳號",
+      "name": "APP畫面顯示與機台狀態不符",
       "count": 4,
-      "pct": 6.6,
+      "pct": 5.3,
       "col": "060E9F",
       "note": ""
     }
@@ -194,257 +194,239 @@
     {
       "label": "寶特瓶滿艙",
       "count": 10,
-      "pct": 29.4
+      "pct": 23.8
+    },
+    {
+      "label": "機台當機/無回應",
+      "count": 8,
+      "pct": 19.0
     },
     {
       "label": "回收箱滿艙",
-      "count": 6,
-      "pct": 17.6
-    },
-    {
-      "label": "辨識失敗異常或錯誤",
-      "count": 4,
-      "pct": 11.8
+      "count": 8,
+      "pct": 19.0
     },
     {
       "label": "螢幕異常顯示/畫面異常",
       "count": 3,
-      "pct": 8.8
+      "pct": 7.1
     },
     {
       "label": "機台需維護/故障提醒",
-      "count": 2,
-      "pct": 5.9
+      "count": 3,
+      "pct": 7.1
     },
     {
       "label": "其他機台問題",
-      "count": 9,
-      "pct": 26.5
+      "count": 10,
+      "pct": 23.8
     }
   ],
   "bottleTop3": [
     {
       "rank": 1,
       "name": "滿艙問題（回收箱／寶特瓶）",
-      "count": 16,
-      "pct": 38.1,
+      "count": 17,
+      "pct": 29.3,
       "col": "FF5000",
       "station": "A｜桃園/全聯福利中心大溪員林店站",
       "stationCount": 2
     },
     {
       "rank": 2,
-      "name": "其他建議",
-      "count": 5,
-      "pct": 11.9,
+      "name": "機台當機/無回應",
+      "count": 8,
+      "pct": 13.8,
       "col": "060E9F",
-      "station": "D｜臺南/全聯福利中心仁德德安店站",
-      "stationCount": 2
+      "station": "D｜臺南/迷客夏臺南華平店站",
+      "stationCount": 4
     },
     {
       "rank": 3,
       "name": "點數未入帳號",
-      "count": 3,
-      "pct": 7.1,
+      "count": 7,
+      "pct": 12.1,
       "col": "0076A9",
-      "station": "A｜桃園/全聯福利中心平鎮新富店站",
+      "station": "D｜新竹/全家芎林飛鳳店站",
       "stationCount": 1
     }
   ],
   "batTop3": [
     {
       "rank": 1,
-      "name": "辨識失敗異常或錯誤",
-      "count": 2,
-      "pct": 33.3,
-      "col": "FF5000",
-      "station": "E｜臺南/全家台南萬年店站",
-      "stationCount": 2
-    },
-    {
-      "rank": 2,
       "name": "點數未入帳號",
       "count": 1,
-      "pct": 16.7,
-      "col": "060E9F",
-      "station": "D｜臺中/全聯福利中心台中中平店站",
-      "stationCount": 1
-    },
-    {
-      "rank": 3,
-      "name": "螢幕異常顯示/畫面異常",
-      "count": 1,
-      "pct": 16.7,
-      "col": "0076A9",
-      "station": "C｜高雄/億進寢具鳳屏店站",
+      "pct": 100.0,
+      "col": "FF5000",
+      "station": "B｜桃園/小北百貨桃園大有店站",
       "stationCount": 1
     }
   ],
-  "bottleTotal": 42,
-  "batTotal": 6,
-  "machineTotal": 48,
-  "bottlePct": 87.5,
-  "batPct": 12.5,
+  "bottleTotal": 58,
+  "batTotal": 1,
+  "machineTotal": 59,
+  "bottlePct": 98.3,
+  "batPct": 1.7,
   "hotAreas": [
     {
-      "area": "臺南",
+      "area": "桃園",
       "total": 13,
       "spots": [
         {
-          "name": "全家台南萬年店站",
+          "name": "萬家福中壢店方舟站",
+          "count": 5
+        },
+        {
+          "name": "小北百貨桃園大有店站",
           "count": 2
         },
         {
-          "name": "全聯福利中心永康永大一店站",
-          "count": 2
-        },
-        {
-          "name": "全聯福利中心仁德德安店站",
+          "name": "全聯福利中心觀音莊敬店站",
           "count": 2
         }
       ]
     },
     {
-      "area": "桃園",
-      "total": 10,
+      "area": "高雄",
+      "total": 13,
       "spots": [
         {
-          "name": "全聯福利中心大溪員林店站",
+          "name": "小北百貨高雄中正店站",
           "count": 2
         },
         {
-          "name": "小北百貨桃園大業店站",
-          "count": 1
+          "name": "全聯福利中心左營海景店站",
+          "count": 2
         },
         {
-          "name": "全聯福利中心桃園慈文店站",
+          "name": "全家仁武快樂店站",
           "count": 1
         }
       ]
     },
     {
-      "area": "臺中",
+      "area": "臺南",
       "total": 6,
       "spots": [
         {
-          "name": "全聯福利中心台中太原店站",
+          "name": "迷客夏臺南華平店站",
+          "count": 4
+        },
+        {
+          "name": "鞋全家福長榮店站",
           "count": 1
         },
         {
-          "name": "全家台中金順店站",
-          "count": 1
-        },
-        {
-          "name": "全聯福利中心烏日公園店站",
+          "name": "全家台南萬年店站",
           "count": 1
         }
       ]
     }
   ],
-  "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（38.1%，16件），最高回報站點為 A｜桃園/全聯福利中心大溪員林店站（2件），建議優先派工檢修；電池機客訴則集中於「辨識失敗異常或錯誤」（33.3%，2件），建議持續追蹤。",
+  "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（29.3%，17件），最高回報站點為 A｜桃園/全聯福利中心大溪員林店站（2件），建議優先派工檢修；電池機客訴則集中於「點數未入帳號」（100.0%，1件），建議持續追蹤。",
   "lowVolumeStations": [
     {
-      "name": "衛生福利部雙和醫院第一醫療大樓站",
-      "city": "新北",
+      "name": "總太東光好室站",
+      "city": "臺中",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
+      "name": "總太松竹好室站",
+      "city": "臺中",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
+      "name": "頭屋明德社區站",
+      "city": "苗栗",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
+      "momChange": null,
+      "machineType": "AI-4",
+      "leaseType": null
+    },
+    {
+      "name": "南投東華醫院站",
+      "city": "南投",
       "contribution": 0,
       "hiveRank": 530,
       "grade": "F",
       "momChange": null,
-      "machineType": "H30",
-      "leaseType": "租賃"
+      "machineType": "AI-HD",
+      "leaseType": null
     },
     {
-      "name": "南山高中大中一樓站",
-      "city": "新北",
+      "name": "員林常春醫院站",
+      "city": "彰化",
       "contribution": 0,
-      "hiveRank": 531,
-      "grade": "F",
+      "hiveRank": null,
+      "grade": null,
       "momChange": null,
-      "machineType": "H30",
+      "machineType": "AI-HD",
+      "leaseType": null
+    },
+    {
+      "name": "員林宏仁醫院站",
+      "city": "彰化",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
+      "momChange": null,
+      "machineType": "AI-HD",
+      "leaseType": null
+    },
+    {
+      "name": "新東陽關西服務區站",
+      "city": "新竹",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
+      "momChange": null,
+      "machineType": "AI-HD",
       "leaseType": null
     },
     {
       "name": "成功大學光復第二宿舍站",
       "city": "臺南",
-      "contribution": 934,
-      "hiveRank": 516,
+      "contribution": 0,
+      "hiveRank": 523,
       "grade": "F",
       "momChange": null,
       "machineType": "AI-4",
       "leaseType": "租賃"
     },
     {
-      "name": "全聯福利中心屏東瑞民店站",
-      "city": "屏東",
-      "contribution": 1075,
-      "hiveRank": 515,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "AI-4",
-      "leaseType": null
-    },
-    {
-      "name": "全聯福利中心總部大樓站",
+      "name": "Global Mall 環球南港車站",
       "city": "臺北",
-      "contribution": 1600,
-      "hiveRank": 514,
-      "grade": "F",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
       "momChange": null,
-      "machineType": "AI-4",
+      "machineType": "H30",
       "leaseType": null
     },
     {
-      "name": "健美洋行南一中體育館站",
-      "city": "臺南",
-      "contribution": 1622,
-      "hiveRank": 513,
+      "name": "澎湖車船處交通船馬公候船室站",
+      "city": "澎湖",
+      "contribution": 0,
+      "hiveRank": 524,
       "grade": "F",
       "momChange": null,
-      "machineType": "AI-HD",
-      "leaseType": null
-    },
-    {
-      "name": "成功大學學生活動中心(一)站",
-      "city": "臺南",
-      "contribution": 1729,
-      "hiveRank": 512,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "AI-4",
-      "leaseType": "租賃"
-    },
-    {
-      "name": "全聯福利中心右昌店站",
-      "city": "高雄",
-      "contribution": 1753,
-      "hiveRank": 511,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "AI-4",
-      "leaseType": null
-    },
-    {
-      "name": "全聯福利中心彰化田中店站",
-      "city": "彰化",
-      "contribution": 1766,
-      "hiveRank": 510,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "AI-HD",
-      "leaseType": null
-    },
-    {
-      "name": "全聯福利中心三民十全三店站",
-      "city": "高雄",
-      "contribution": 1852,
-      "hiveRank": 509,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "AI-HD",
+      "machineType": "H30",
       "leaseType": null
     }
   ],
-  "totalNetworkStations": 542,
+  "totalNetworkStations": 540,
   "dataSourceNote": "資料來源：Hive，一般站依近 30 個台灣日曆日實際清運的塑膠＋鋁罐瓶數分 S～F；三台以上有效收瓶機獨立列為 ARK",
   "gradeTiers": [
     {
@@ -499,31 +481,31 @@
   "tierSectionLabel": "等級+加分/瓶量：",
   "statCards": {
     "card1": {
-      "value": 61,
-      "prev": 165,
-      "diff": -104,
-      "wow_pct": -63.0
+      "value": 76,
+      "prev": 61,
+      "diff": 15,
+      "wow_pct": 24.6
     },
     "card2": {
-      "name": "寶特瓶滿艙",
-      "count": 10,
-      "share": 16.4,
-      "share_delta": 7.3
+      "name": "其他建議",
+      "count": 11,
+      "share": 14.5,
+      "share_delta": 3.0
     },
     "card3": {
-      "name": "全家台南萬年店站",
-      "area": "臺南",
-      "count": 2,
-      "diff": 2
+      "name": "萬家福中壢店方舟站",
+      "area": "桃園",
+      "count": 5,
+      "diff": 5
     },
     "card4": {
-      "pct": 44.3,
-      "pct_delta": 4.9,
-      "sample_type": "忘記密碼/無法重設密碼"
+      "pct": 44.7,
+      "pct_delta": 0.4,
+      "sample_type": "其他建議"
     },
-    "wow_total_pct": -63.0,
-    "mom_total_pct": -11.7
+    "wow_total_pct": 24.6,
+    "mom_total_pct": -26.1
   },
-  "reportGeneratedDate": "2026/08/27",
-  "dataPeriodLabel": "2026/07/28-08/27"
+  "reportGeneratedDate": "2026/08/31",
+  "dataPeriodLabel": "2026/08/01-08/31"
 }
