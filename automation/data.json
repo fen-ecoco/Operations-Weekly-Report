@@ -351,7 +351,10 @@
       "contribution": 112,
       "hiveRank": 513,
       "grade": "F",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 112.0,
+        "pct": 0.0
+      },
       "machineType": "AI-HD",
       "leaseType": null
     },
@@ -361,7 +364,10 @@
       "contribution": 823,
       "hiveRank": 512,
       "grade": "F",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 823.0,
+        "pct": 0.0
+      },
       "machineType": "AI-4",
       "leaseType": null
     },
@@ -371,7 +377,10 @@
       "contribution": 1075,
       "hiveRank": 511,
       "grade": "F",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 1075.0,
+        "pct": 0.0
+      },
       "machineType": "AI-4",
       "leaseType": null
     },
@@ -381,7 +390,10 @@
       "contribution": 1100,
       "hiveRank": 510,
       "grade": "F",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 1100.0,
+        "pct": 0.0
+      },
       "machineType": "AI-HD",
       "leaseType": null
     },
@@ -391,9 +403,12 @@
       "contribution": 1100,
       "hiveRank": 466,
       "grade": "E",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 1100.0,
+        "pct": 0.0
+      },
       "machineType": "AI-4",
-      "leaseType": null
+      "leaseType": "租賃"
     },
     {
       "name": "嘉義新港圖書館站",
@@ -401,7 +416,10 @@
       "contribution": 1100,
       "hiveRank": 450,
       "grade": "E",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 1100.0,
+        "pct": 0.0
+      },
       "machineType": "AI-4",
       "leaseType": null
     },
@@ -411,7 +429,10 @@
       "contribution": 1162,
       "hiveRank": 509,
       "grade": "F",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 1162.0,
+        "pct": 0.0
+      },
       "machineType": "AI-4",
       "leaseType": "租賃"
     },
@@ -421,7 +442,10 @@
       "contribution": 1392,
       "hiveRank": 508,
       "grade": "F",
-      "momChange": null,
+      "momChange": {
+        "prev_volume": 1392.0,
+        "pct": 0.0
+      },
       "machineType": "AI-HD",
       "leaseType": null
     }
@@ -506,6 +530,146 @@
     "wow_total_pct": 24.6,
     "mom_total_pct": -26.1
   },
-  "reportGeneratedDate": "2026/08/31",
-  "dataPeriodLabel": "2026/08/01-08/31"
+  "page4": {
+    "kpi": {
+      "monthTotal": {
+        "value": 508,
+        "period": "26年8月",
+        "deltaPct": -25.1,
+        "prevValue": 678
+      },
+      "perStation": {
+        "value": 0.97,
+        "deltaPct": -24.8,
+        "prevValue": 1.29
+      },
+      "quarterTotal": {
+        "value": 2078,
+        "quarterLabel": "26年Q2",
+        "deltaPct": -2.2,
+        "prevValue": 2125
+      },
+      "machinePct": {
+        "value": 45.4,
+        "deltaPct": -6.8
+      }
+    },
+    "monthlyTrend": [
+      {
+        "period": "2026-03",
+        "label": "3月",
+        "total": 1045,
+        "perStation": 1.99
+      },
+      {
+        "period": "2026-04",
+        "label": "4月",
+        "total": 600,
+        "perStation": 1.14
+      },
+      {
+        "period": "2026-05",
+        "label": "5月",
+        "total": 880,
+        "perStation": 1.68
+      },
+      {
+        "period": "2026-06",
+        "label": "6月",
+        "total": 598,
+        "perStation": 1.14
+      },
+      {
+        "period": "2026-07",
+        "label": "7月",
+        "total": 678,
+        "perStation": 1.29
+      },
+      {
+        "period": "2026-08",
+        "label": "8月",
+        "total": 508,
+        "perStation": 0.97
+      }
+    ],
+    "quarterCompare": {
+      "curLabel": "26年Q2",
+      "prevLabel": "26年Q1",
+      "cur": [
+        {
+          "label": "APP帳號設定問題",
+          "count": 450,
+          "pct": 21.7
+        },
+        {
+          "label": "機台問題",
+          "count": 944,
+          "pct": 45.4
+        },
+        {
+          "label": "回收點數問題",
+          "count": 223,
+          "pct": 10.7
+        },
+        {
+          "label": "顧客關係",
+          "count": 221,
+          "pct": 10.6
+        },
+        {
+          "label": "優惠券問題",
+          "count": 130,
+          "pct": 6.3
+        },
+        {
+          "label": "APP使用問題",
+          "count": 108,
+          "pct": 5.2
+        }
+      ],
+      "prev": [
+        {
+          "label": "APP帳號設定問題",
+          "count": 171,
+          "pct": 8.0
+        },
+        {
+          "label": "機台問題",
+          "count": 1110,
+          "pct": 52.2
+        },
+        {
+          "label": "回收點數問題",
+          "count": 213,
+          "pct": 10.0
+        },
+        {
+          "label": "顧客關係",
+          "count": 250,
+          "pct": 11.8
+        },
+        {
+          "label": "優惠券問題",
+          "count": 240,
+          "pct": 11.3
+        },
+        {
+          "label": "APP使用問題",
+          "count": 134,
+          "pct": 6.3
+        }
+      ],
+      "biggestChange": {
+        "label": "APP帳號設定問題",
+        "delta": 13.7,
+        "cur_pct": 21.7,
+        "prev_pct": 8.0
+      }
+    },
+    "seasonalInsight": "本季「APP帳號設定問題」佔比較上季上升 13.7 個百分點（8.0% → 21.7%），建議留意是否為季節性因素導致，提前調整備料或派工排程。",
+    "activityInsight": null,
+    "highRiskStations": []
+  },
+  "reportGeneratedDate": "2026/09/02",
+  "dataPeriodLabel": "2026/08/03-09/02"
 }

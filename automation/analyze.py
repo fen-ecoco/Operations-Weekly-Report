@@ -415,6 +415,241 @@ statCards = {
     "wow_total_pct": wow_total_pct, "mom_total_pct": mom_total_pct,
 }
 
+# ================= 11. 第四頁：客訴趨勢洞察（MoM／QoQ）=================
+# 「最近一個完整月」＝目前月份的前一個月（當月尚未走完，用當月資料會失真，故一律往前推一個月）
+today_ts = pd.Timestamp(datetime.now().date())
+last_complete_month = (today_ts.replace(day=1) - pd.Timedelta(days=1)).to_period("M")
+prev_month = last_complete_month - 1
+earliest_period = df["dt"].dropna().dt.to_period("M").min()
+
+
+def month_slice_p4(period):
+    return df[df["dt"].dt.to_period("M") == period]
+
+
+def month_stats(period):
+    sub = month_slice_p4(period)
+    tot = len(sub)
+    vc = sub["問題類型"].value_counts()
+    cats_m = {label: int(vc.get(key, 0)) for label, key in CATS_ORDER}
+    return {"period": str(period), "total": tot, "cats": cats_m}
+
+
+cur_month_stats = month_stats(last_complete_month)
+prev_month_stats = month_stats(prev_month) if prev_month >= earliest_period else None
+mom_pct = (
+    round((cur_month_stats["total"] - prev_month_stats["total"]) / prev_month_stats["total"] * 100, 1)
+    if prev_month_stats and prev_month_stats["total"] else None
+)
+
+# 「每站平均客訴量」：萬人客訴率的暫代指標（目前資料源無站點覆蓋用戶數，待有來源後可直接換算公式，介面不變）
+active_station_count = len(vol_master_df) if vol_master_df is not None else None
+
+
+def per_station(total_count):
+    return round(total_count / active_station_count, 2) if active_station_count else None
+
+
+cur_per_station = per_station(cur_month_stats["total"])
+prev_per_station = per_station(prev_month_stats["total"]) if prev_month_stats else None
+per_station_delta_pct = (
+    round((cur_per_station - prev_per_station) / prev_per_station * 100, 1)
+    if cur_per_station is not None and prev_per_station else None
+)
+
+# 近6個完整月趨勢（動態抓最近6個月，若資料起點不足6個月則有多少畫多少，不補0避免誤導）
+monthly_trend = []
+for i in range(5, -1, -1):
+    p = last_complete_month - i
+    if p < earliest_period:
+        continue
+    stats = month_stats(p)
+    monthly_trend.append({
+        "period": str(p), "label": f"{p.month}月",
+        "total": stats["total"], "perStation": per_station(stats["total"]),
+    })
+
+# 季度判斷：找出「最近一個已完整走完的季度」(季末月份為3/6/9/12月)
+m = last_complete_month
+while m.month % 3 != 0:
+    m -= 1
+last_complete_quarter_end = m
+prev_quarter_end = last_complete_quarter_end - 3
+
+
+def quarter_label(end_period):
+    q_num = end_period.month // 3
+    return f"{end_period.year % 100}年Q{q_num}"
+
+
+def quarter_stats(end_period):
+    if end_period < earliest_period:
+        return None
+    start_period = max(end_period - 2, earliest_period)
+    mask = (df["dt"].dt.to_period("M") >= start_period) & (df["dt"].dt.to_period("M") <= end_period)
+    sub = df[mask]
+    tot = len(sub)
+    vc = sub["問題類型"].value_counts()
+    cats_q = []
+    for label, key in CATS_ORDER:
+        c = int(vc.get(key, 0))
+        cats_q.append({"label": label, "count": c, "pct": round(c / tot * 100, 1) if tot else 0})
+    return {"total": tot, "cats": cats_q}
+
+
+cur_quarter_stats = quarter_stats(last_complete_quarter_end)
+prev_quarter_stats = quarter_stats(prev_quarter_end)
+qoq_pct = (
+    round((cur_quarter_stats["total"] - prev_quarter_stats["total"]) / prev_quarter_stats["total"] * 100, 1)
+    if cur_quarter_stats and prev_quarter_stats and prev_quarter_stats["total"] else None
+)
+
+machine_pct_cur = next((c["pct"] for c in cur_quarter_stats["cats"] if c["label"] == "機台問題"), 0) if cur_quarter_stats else 0
+machine_pct_prev = next((c["pct"] for c in prev_quarter_stats["cats"] if c["label"] == "機台問題"), 0) if prev_quarter_stats else 0
+machine_pct_delta = round(machine_pct_cur - machine_pct_prev, 1) if prev_quarter_stats else None
+
+# 找出 QoQ 佔比變化最大的問題類型（動態計算，不寫死類別名稱）
+biggest_change = None
+if cur_quarter_stats and prev_quarter_stats:
+    for cc, pc in zip(cur_quarter_stats["cats"], prev_quarter_stats["cats"]):
+        delta = round(cc["pct"] - pc["pct"], 1)
+        if biggest_change is None or abs(delta) > abs(biggest_change["delta"]):
+            biggest_change = {"label": cc["label"], "delta": delta, "cur_pct": cc["pct"], "prev_pct": pc["pct"]}
+
+# 本季結構變化重點文字（依實際變化最大項動態生成，不假設成因，避免誤導）
+# 註：判斷「季節性」須有至少一年（同季 YoY）以上資料比對，目前資料起點為2026年，尚不足以下此結論，
+#     故此處僅如實描述「本季 vs 上季」的結構變化事實，不冠上「季節性」等因果推論字眼
+quarters_available = df["dt"].dropna().dt.to_period("Q").nunique()
+if biggest_change and biggest_change["delta"] > 0:
+    structural_insight = (
+        f"本季「{biggest_change['label']}」佔比較上季上升 {biggest_change['delta']} 個百分點"
+        f"（{biggest_change['prev_pct']}% → {biggest_change['cur_pct']}%），為本季結構變化最大的問題類型，建議追蹤後續走勢並評估對應改善措施。"
+    )
+elif biggest_change and biggest_change["delta"] < 0:
+    structural_insight = (
+        f"本季「{biggest_change['label']}」佔比較上季下降 {abs(biggest_change['delta'])} 個百分點"
+        f"（{biggest_change['prev_pct']}% → {biggest_change['cur_pct']}%），為本季結構變化最大的問題類型，改善成效可留意是否延續。"
+    )
+else:
+    structural_insight = "本季各問題類型佔比與上季相近，未見明顯結構性變化。"
+if quarters_available < 5:
+    structural_insight += "（資料累積中，須滿一年以上同季比較才能判斷是否為季節性規律）"
+
+# 執行摘要（一句話重點，給主管/跨部門一眼看懂本月+本季整體方向）
+def _dir_word(pct):
+    if pct is None:
+        return None, None
+    if pct < 0:
+        return "下降", abs(pct)
+    if pct > 0:
+        return "上升", pct
+    return "持平", 0
+
+mom_dir, mom_abs = _dir_word(mom_pct)
+qoq_dir, qoq_abs = _dir_word(qoq_pct)
+
+if mom_pct is not None and qoq_pct is not None:
+    if mom_pct <= 0 and qoq_pct <= 0:
+        overall_judgement = "整體呈現改善趨勢"
+    elif mom_pct >= 0 and qoq_pct >= 0:
+        overall_judgement = "整體呈現上升趨勢，需留意"
+    else:
+        overall_judgement = "月度與季度方向不一致，建議留意近期變化"
+else:
+    overall_judgement = "資料累積中"
+
+headline_parts = []
+if mom_dir:
+    headline_parts.append(f"本月客訴量較上月{mom_dir} {mom_abs}%")
+if qoq_dir:
+    headline_parts.append(f"本季較上季{qoq_dir} {qoq_abs}%")
+headline = "，".join(headline_parts)
+headline = f"{headline}，{overall_judgement}。" if headline else "資料累積中，尚無法產出完整趨勢摘要。"
+if biggest_change and biggest_change["delta"] != 0:
+    bc_dir = "上升" if biggest_change["delta"] > 0 else "下降"
+    headline += f" 本季變化最大：「{biggest_change['label']}」{bc_dir} {abs(biggest_change['delta'])} 個百分點，建議優先關注。"
+
+
+# 系統／活動影響評估：需 activity_calendar_path（行銷活動／系統更新時間表），目前無此資料源則整段略過，不中斷報告
+ACTIVITY_CSV = CONFIG.get("activity_calendar_path")
+activity_insight = None
+if ACTIVITY_CSV and os.path.exists(ACTIVITY_CSV):
+    try:
+        act_df = pd.read_csv(ACTIVITY_CSV)
+        act_df.columns = act_df.columns.str.strip()
+        act_df["date"] = pd.to_datetime(act_df["日期"], errors="coerce")
+        month_start = last_complete_month.start_time
+        month_end = last_complete_month.end_time
+        acts = act_df[(act_df["date"] >= month_start) & (act_df["date"] <= month_end)]
+        if len(acts):
+            names = "、".join(acts["活動名稱"].astype(str).tolist())
+            activity_insight = f"本月活動／系統異動：{names}，建議比對客訴日期分布確認是否有關聯。"
+        else:
+            activity_insight = "本月無登記活動或系統異動紀錄。"
+    except Exception as e:
+        print(f"警告：讀取 {ACTIVITY_CSV} 失敗（{e}），系統/活動影響評估段落略過。")
+
+# ================= 12. 高風險站點長效追蹤（連續2個月以上進入月低回收量清單）=================
+LOW_VOLUME_HISTORY_PATH = os.path.join(SCRIPT_DIR, "monthly_low_volume_history.json")
+low_vol_history = {}
+if os.path.exists(LOW_VOLUME_HISTORY_PATH):
+    with open(LOW_VOLUME_HISTORY_PATH, "r", encoding="utf-8") as f:
+        low_vol_history = json.load(f)
+
+current_month_key2 = datetime.now().strftime("%Y-%m")
+current_low_names = [s["name"] for s in lowVolumeStations]
+low_vol_history[current_month_key2] = current_low_names
+keep_months = sorted(low_vol_history.keys())[-12:]  # 只保留近12個月，避免檔案無限長大
+low_vol_history = {k: low_vol_history[k] for k in keep_months}
+
+with open(LOW_VOLUME_HISTORY_PATH, "w", encoding="utf-8") as f:
+    json.dump(low_vol_history, f, ensure_ascii=False, indent=2)
+
+sorted_months_desc = sorted(low_vol_history.keys(), reverse=True)
+highRiskStations = []
+for name in current_low_names:
+    streak = 0
+    for m_key in sorted_months_desc:
+        if name in low_vol_history.get(m_key, []):
+            streak += 1
+        else:
+            break
+    if streak >= 2:
+        grade = next((s["grade"] for s in lowVolumeStations if s["name"] == name), None)
+        highRiskStations.append({"name": name, "streak": streak, "grade": grade})
+highRiskStations.sort(key=lambda s: -s["streak"])
+
+page4 = {
+    "kpi": {
+        "monthTotal": {
+            "value": cur_month_stats["total"], "period": f"{last_complete_month.year % 100}年{last_complete_month.month}月",
+            "deltaPct": mom_pct, "prevValue": prev_month_stats["total"] if prev_month_stats else None,
+        },
+        "perStation": {
+            "value": cur_per_station, "deltaPct": per_station_delta_pct, "prevValue": prev_per_station,
+        },
+        "quarterTotal": {
+            "value": cur_quarter_stats["total"] if cur_quarter_stats else None,
+            "quarterLabel": quarter_label(last_complete_quarter_end),
+            "deltaPct": qoq_pct,
+            "prevValue": prev_quarter_stats["total"] if prev_quarter_stats else None,
+        },
+        "machinePct": {"value": machine_pct_cur, "deltaPct": machine_pct_delta},
+    },
+    "monthlyTrend": monthly_trend,
+    "quarterCompare": {
+        "curLabel": quarter_label(last_complete_quarter_end),
+        "prevLabel": quarter_label(prev_quarter_end) if prev_quarter_stats else None,
+        "cur": cur_quarter_stats["cats"] if cur_quarter_stats else [],
+        "prev": prev_quarter_stats["cats"] if prev_quarter_stats else [],
+        "biggestChange": biggest_change,
+    },
+    "structuralInsight": structural_insight,
+    "headline": headline,
+    "activityInsight": activity_insight,
+    "highRiskStations": highRiskStations,
+}
+
 # ================= 輸出 =================
 data = {
     "week": WEEK_LABEL,
@@ -439,6 +674,7 @@ data = {
     "gradeTiers": gradeTiers,
     "tierSectionLabel": tierSectionLabel,
     "statCards": statCards,
+    "page4": page4,
     "reportGeneratedDate": datetime.now().strftime("%Y/%m/%d"),
     "dataPeriodLabel": f"{(datetime.now() - timedelta(days=30)).strftime('%Y/%m/%d')}-{datetime.now().strftime('%m/%d')}",
 }

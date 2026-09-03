@@ -465,9 +465,214 @@ function buildSlide3() {
   });
 }
 
+// ============================================================
+// SLIDE 4 — 客訴趨勢洞察（MoM／QoQ）
+// ============================================================
+function buildSlide4() {
+  const slide = pres.addSlide();
+  slide.background = { color: C.white };
+  const P4 = D.page4;
+  if (!P4) return; // 防呆：舊版 data.json 若無 page4 欄位，略過此頁避免整份簡報中斷
+
+  slide.addShape('rect', { x: 0.4, y: 0.2, w: 0.08, h: 0.34, fill: { color: C.blue }, line: { type: 'none' } });
+  slide.addText('客訴趨勢洞察（MoM／QoQ）', {
+    x: 0.58, y: 0.14, w: 7, h: 0.44,
+    fontFace: F_BLACK, fontSize: 18, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
+  });
+  const pillW4 = 2.7, pillH4 = 0.4;
+  slide.addShape('roundRect', {
+    x: PW - 0.4 - pillW4, y: 0.16, w: pillW4, h: pillH4, rectRadius: pillH4 / 2,
+    fill: { color: C.blue }, line: { type: 'none' },
+  });
+  slide.addText(`${D.week}（${D.range}）`, {
+    x: PW - 0.4 - pillW4, y: 0.16, w: pillW4, h: pillH4,
+    fontFace: F_BOLD, fontSize: 12, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0,
+  });
+
+  // ---- KPI 總覽卡片 (4欄) ----
+  const cardsY = 0.72, cardsH = 1.25, cardGap = 0.2;
+  const cardW = (PW - 0.8 - cardGap * 3) / 4;
+
+  function trendArrow4(val, positiveIsGood = false) {
+    // 客訴量／機台佔比：數值下降代表改善，這裡用語意色（綠＝好／橙＝需留意），不套用其餘頁面「▲橙／▼深藍」的中性配色
+    if (val === null || val === undefined) return { text: '－', color: C.textGray };
+    if (val > 0) return { text: `▲${val}%`, color: positiveIsGood ? '1D9E75' : C.orange };
+    if (val < 0) return { text: `▼${Math.abs(val)}%`, color: positiveIsGood ? C.orange : '1D9E75' };
+    return { text: '持平', color: C.textGray };
+  }
+
+  function kpiCard(x, accent, icon, title, mainNode, subText, badge) {
+    slide.addShape('roundRect', {
+      x, y: cardsY, w: cardW, h: cardsH, rectRadius: 0.09,
+      fill: { color: 'FFFFFF' }, line: { color: 'E5E5E5', width: 1 },
+      shadow: { type: 'outer', color: '999999', opacity: 0.2, blur: 5, offset: 1.5, angle: 90 },
+    });
+    slide.addShape('roundRect', {
+      x, y: cardsY, w: cardW, h: 0.07, rectRadius: 0.03,
+      fill: { color: accent }, line: { type: 'none' },
+    });
+    slide.addText(title, {
+      x: x + 0.2, y: cardsY + 0.12, w: cardW - 0.7, h: 0.28,
+      fontFace: F_BOLD, fontSize: 11, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
+    });
+    slide.addImage({ path: ICON(icon), x: x + cardW - 0.44, y: cardsY + 0.13, w: 0.24, h: 0.24 });
+    slide.addText(mainNode, {
+      x: x + 0.2, y: cardsY + 0.40, w: cardW - 0.4, h: 0.42, valign: 'middle', margin: 0,
+    });
+    slide.addText(subText, {
+      x: x + 0.2, y: cardsY + 0.80, w: cardW - 1.0, h: 0.3,
+      fontFace: F_MED, fontSize: 8.5, color: C.textGray, valign: 'top', margin: 0, lineSpacingMultiple: 1.05,
+    });
+    if (badge) {
+      slide.addShape('roundRect', {
+        x: x + cardW - 0.98, y: cardsY + 0.78, w: 0.8, h: 0.28, rectRadius: 0.14,
+        fill: { color: badge.color === '1D9E75' ? 'DFF3EA' : (badge.color === C.orange ? 'FFE9DC' : 'F0F0F0') }, line: { type: 'none' },
+      });
+      slide.addText(badge.text, {
+        x: x + cardW - 0.98, y: cardsY + 0.78, w: 0.8, h: 0.28,
+        fontFace: F_BOLD, fontSize: 9.5, bold: true, color: badge.color, align: 'center', valign: 'middle', margin: 0,
+      });
+    }
+  }
+
+  // 卡1：本月客訴總量 (MoM)
+  {
+    const x = 0.4;
+    const k = P4.kpi.monthTotal;
+    const sub = k.prevValue != null ? `較上月（${k.prevValue}件）` : '無上月比較基準';
+    kpiCard(x, C.blue, 'headset_blue', `本月客訴總量（${k.period}）`,
+      [{ text: `${k.value} `, options: { fontSize: 25, bold: true, color: C.blue, fontFace: F_BLACK } },
+       { text: '件', options: { fontSize: 12.5, bold: true, color: C.blue, fontFace: F_BOLD } }],
+      sub, trendArrow4(k.deltaPct));
+  }
+  // 卡2：客訴密度指標（每站平均客訴量，暫代萬人客訴率；待有用戶數資料源後可直接換算，介面不變）
+  {
+    const x = 0.4 + (cardW + cardGap);
+    const k = P4.kpi.perStation;
+    kpiCard(x, C.darkBlue, 'pin_darkblue', '客訴密度指標（件/站）',
+      [{ text: `${k.value ?? '－'} `, options: { fontSize: 25, bold: true, color: C.darkBlue, fontFace: F_BLACK } },
+       { text: '件/站', options: { fontSize: 11, bold: true, color: C.darkBlue, fontFace: F_BOLD } }],
+      '每站平均客訴量，暫代萬人客訴率', trendArrow4(k.deltaPct));
+  }
+  // 卡3：本季客訴總量 (QoQ)
+  {
+    const x = 0.4 + 2 * (cardW + cardGap);
+    const k = P4.kpi.quarterTotal;
+    const sub = k.prevValue != null ? `較上季（${k.prevValue}件）` : '無上季比較基準';
+    kpiCard(x, C.orange, 'warn_orange', `本季客訴總量（${k.quarterLabel}）`,
+      [{ text: `${k.value ?? '－'} `, options: { fontSize: 25, bold: true, color: C.orange, fontFace: F_BLACK } },
+       { text: '件', options: { fontSize: 12.5, bold: true, color: C.orange, fontFace: F_BOLD } }],
+      sub, trendArrow4(k.deltaPct));
+  }
+  // 卡4：機台問題佔比 (QoQ)
+  {
+    const x = 0.4 + 3 * (cardW + cardGap);
+    const k = P4.kpi.machinePct;
+    kpiCard(x, C.yellow, 'recycle_blue', `機台問題佔比（${P4.quarterCompare.curLabel}）`,
+      [{ text: `${k.value}`, options: { fontSize: 25, bold: true, color: '9C7A00', fontFace: F_BLACK } },
+       { text: '%', options: { fontSize: 12.5, bold: true, color: '9C7A00', fontFace: F_BOLD } }],
+      '較上季佔比變化', trendArrow4(k.deltaPct, true));
+  }
+
+  // ---- 圖表區：圖A（MoM 雙軸趨勢）／ 圖B（QoQ 結構比，加寬）----
+  const chartY = cardsY + cardsH + 0.3;
+  const chartH = 2.5;
+  const leftW4 = 5.7, colGap4 = 0.3, rightX4 = 0.4 + leftW4 + colGap4, rightW4 = PW - 0.4 - rightX4;
+
+  sectionBar(slide, `總客訴量與客訴密度趨勢圖（MoM，近${P4.monthlyTrend.length}個月）`, 0.4, chartY, leftW4);
+  const barData4 = [{ name: '客訴總量（件）', labels: P4.monthlyTrend.map(m => m.label), values: P4.monthlyTrend.map(m => m.total) }];
+  const lineData4 = [{ name: '客訴密度（件/站）', labels: P4.monthlyTrend.map(m => m.label), values: P4.monthlyTrend.map(m => m.perStation) }];
+  slide.addChart(
+    [
+      { type: pres.ChartType.bar, data: barData4, options: { chartColors: [C.blue] } },
+      { type: pres.ChartType.line, data: lineData4, options: { chartColors: [C.orange], secondaryValAxis: true, secondaryCatAxis: true, lineSize: 2.5, lineDataSymbol: 'circle', lineDataSymbolSize: 6 } },
+    ],
+    {
+      x: 0.4, y: chartY + 0.38, w: leftW4, h: chartH - 0.38,
+      showLegend: true, legendPos: 'b', legendFontSize: 9, legendColor: C.textGray,
+      // 雙軸圖表：pptxgenjs 需在頂層明確給出 valAxes / catAxes 兩組設定，
+      // 光靠各 series 的 secondaryValAxis:true 並不會真的產生第二條座標軸(僅是參照，若沒有對應定義會導致折線塌縮貼底)
+      valAxes: [
+        { valAxisLabelFontSize: 8.5, valAxisLabelColor: C.textGray, showValAxisTitle: false },
+        { valAxisLabelFontSize: 8.5, valAxisLabelColor: C.textGray, showValAxisTitle: false, valAxisMinVal: 0 },
+      ],
+      catAxes: [
+        { catAxisLabelFontSize: 9.5, catAxisLabelColor: C.textGray },
+        { catAxisHidden: true },
+      ],
+      barGapWidthPct: 40,
+    }
+  );
+
+  sectionBar(slide, '客訴主題結構比變化（QoQ）', rightX4, chartY, rightW4, { textColor: C.orange });
+  if (P4.quarterCompare.prev.length) {
+    const qLabels = [P4.quarterCompare.prevLabel, P4.quarterCompare.curLabel];
+    const stackColors = { '機台問題': C.blue, '回收點數問題': C.darkBlue, '顧客關係': '7F77DD', '優惠券問題': 'E24B4A', 'APP帳號設定問題': 'BA7517', 'APP使用問題': 'D4537E' };
+    const stackData4 = P4.quarterCompare.cur.map((c, i) => ({
+      name: c.label,
+      labels: qLabels,
+      values: [P4.quarterCompare.prev[i].pct, c.pct],
+    }));
+
+    slide.addChart(pres.ChartType.bar, stackData4, {
+      x: rightX4, y: chartY + 0.38, w: rightW4, h: chartH - 0.38,
+      barDir: 'bar', barGrouping: 'percentStacked',
+      chartColors: P4.quarterCompare.cur.map(c => stackColors[c.label] || C.textGray),
+      showLegend: true, legendPos: 'b', legendFontSize: 8, legendColor: C.textGray,
+      catAxisLabelFontSize: 9.5, catAxisLabelColor: C.textGray,
+      valAxisLabelFontSize: 8.5, valAxisLabelColor: C.textGray,
+      valAxisLabelFormatCode: '0%',
+      showValAxisTitle: true, valAxisTitle: '客訴佔比', valAxisTitleFontSize: 9, valAxisTitleColor: C.textGray,
+      showValue: true, dataLabelPosition: 'ctr', dataLabelColor: 'FFFFFF',
+      dataLabelFontSize: 6.5, dataLabelFontFace: F_BOLD, dataLabelFormatCode: '0.0"%"',
+    });
+  } else {
+    slide.addText('資料累積中，尚無上一季度可供比較', {
+      x: rightX4, y: chartY + 0.9, w: rightW4, h: 0.5,
+      fontFace: F_MED, fontSize: 11, color: C.textGray, align: 'center', margin: 0,
+    });
+  }
+
+  // ---- 客服觀點與改善行動建議 ----
+  const insightY = chartY + chartH + 0.28;
+  sectionBar(slide, '客服觀點與改善行動建議', 0.4, insightY, PW - 0.8);
+
+  function insightBox(y, h, barColor, bgColor, label, text, textColor, fontSize) {
+    slide.addShape('roundRect', {
+      x: 0.4, y, w: PW - 0.8, h, rectRadius: 0.06,
+      fill: { color: bgColor }, line: { color: barColor, width: 0.75 },
+    });
+    slide.addShape('rect', { x: 0.4, y, w: 0.06, h, fill: { color: barColor }, line: { type: 'none' } });
+    slide.addText(label, {
+      x: 0.62, y: y + 0.06, w: 1.9, h: h - 0.12,
+      fontFace: F_BOLD, fontSize: 10.5, bold: true, color: textColor || barColor, valign: 'middle', margin: 0,
+    });
+    slide.addText(text, {
+      x: 2.4, y: y + 0.06, w: PW - 0.8 - 2.0, h: h - 0.12,
+      fontFace: F_MED, fontSize: fontSize || 10, color: textColor || C.darkGray, valign: 'middle', margin: 0, lineSpacingMultiple: 1.12, wrap: true,
+    });
+  }
+
+  let iy = insightY + 0.36;
+  const boxH = 0.58, boxGap = 0.13;
+
+  // 重點結論放在最上面：一句話講完本月＋本季方向，主管/跨部門優先看這一格
+  insightBox(iy, 0.62, C.blue, C.blue, '重點結論', P4.headline, C.white, 9.5);
+  iy += 0.62 + boxGap;
+
+  insightBox(iy, boxH, C.orange, 'FFF4EF', '本季結構變化重點', P4.structuralInsight);
+  iy += boxH + boxGap;
+
+  if (P4.activityInsight) {
+    insightBox(iy, boxH, C.darkBlue, 'EEF6FB', '系統／活動影響評估', P4.activityInsight);
+    iy += boxH + boxGap;
+  }
+}
+
 buildSlide1();
 buildSlide2();
 buildSlide3();
+buildSlide4();
 
 const outFile = path.join(__dirname, `ecoco_客服週報_${D.week}_${D.range.replace(/[\s\/]/g, '')}.pptx`);
 pres.writeFile({ fileName: outFile }).then(() => {
