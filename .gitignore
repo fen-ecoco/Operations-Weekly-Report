@@ -1,0 +1,27 @@
+# ecoco Operations-Weekly-Report 專案 .gitignore
+# 放在 repo 根目錄：D:\info\0507_Weekly-Report\Operations-Weekly-Report\.gitignore
+
+# ---- automation/ 資料夾底下的 pptx 暫存檔不要進版控 ----
+# 正式的每週封存版本以 weekly-ppt/ 資料夾裡的為準（那邊繼續正常追蹤）。
+# automation/ 底下的 pptx 只是 analyze.py + generate_ppt_auto.js 產生當下的暫存輸出，
+# run_weekly.ps1 Step 4 會自動複製一份到 weekly-ppt/，automation/ 這份不需要留底。
+# 這條規則也順便解決「Step 4 抓錯最新pptx」的風險來源之一：資料夾裡不會再累積多份舊pptx。
+automation/*.pptx
+
+# ---- 測試/除錯過程中產生的截圖、壓縮檔 ----
+# icons/ 底下是簡報真正要用的圖示素材，明確排除在外，不會被下面這條誤擋掉
+*.png
+!automation/icons/*.png
+*.zip
+
+# ---- Python / Node 常見暫存 ----
+__pycache__/
+*.pyc
+automation/node_modules/
+
+# ---- 作業系統雜項檔案 ----
+.DS_Store
+Thumbs.db
+
+# ---- 其他確認是雜項、非正式交付內容的檔案 ----
+使用方式.txt
