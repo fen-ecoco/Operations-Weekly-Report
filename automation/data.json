@@ -666,10 +666,17 @@
         "prev_pct": 8.0
       }
     },
-    "seasonalInsight": "本季「APP帳號設定問題」佔比較上季上升 13.7 個百分點（8.0% → 21.7%），建議留意是否為季節性因素導致，提前調整備料或派工排程。",
+    "structuralInsight": "本季「APP帳號設定問題」佔比較上季上升 13.7 個百分點（8.0% → 21.7%），為本季結構變化最大的問題類型，建議追蹤後續走勢並評估對應改善措施。（資料累積中，須滿一年以上同季比較才能判斷是否為季節性規律）",
+    "headline": "本月客訴量較上月下降 25.1%，本季較上季下降 2.2%，整體呈現改善趨勢。 本季變化最大：「APP帳號設定問題」上升 13.7 個百分點，建議優先關注。",
     "activityInsight": null,
     "highRiskStations": []
   },
-  "reportGeneratedDate": "2026/09/02",
-  "dataPeriodLabel": "2026/08/03-09/02"
+  "dataStaleness": {
+    "isStale": false,
+    "latestDataDate": "2026-08-30",
+    "daysStale": 5,
+    "message": null
+  },
+  "reportGeneratedDate": "2026/09/04",
+  "dataPeriodLabel": "2026/08/05-09/04"
 }
