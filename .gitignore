@@ -8,6 +8,18 @@
 # 這條規則也順便解決「Step 4 抓錯最新pptx」的風險來源之一：資料夾裡不會再累積多份舊pptx。
 automation/*.pptx
 
+# ---- npm 套件：不進版控，用 package.json / package-lock.json 重新 npm install 即可 ----
+automation/node_modules/
+
+# ---- 巢狀重複的圖示資料夾與zip備份（icons/ 本身正常追蹤，不受影響）----
+automation/icons/icons/
+automation/icons.zip
+
+# ---- 改名前的舊歷史檔／舊版log（現行程式只讀寫 volume_history.json / run_weekly.log）----
+automation/history.json
+automation/rank_history.json
+automation/run_log.txt
+
 # ---- 測試/除錯過程中產生的截圖、壓縮檔 ----
 # icons/ 底下是簡報真正要用的圖示素材，明確排除在外，不會被下面這條誤擋掉
 *.png
@@ -17,7 +29,6 @@ automation/*.pptx
 # ---- Python / Node 常見暫存 ----
 __pycache__/
 *.pyc
-automation/node_modules/
 
 # ---- 作業系統雜項檔案 ----
 .DS_Store
