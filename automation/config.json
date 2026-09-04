@@ -2,6 +2,7 @@
   "complaint_csv_path": "D:\\info\\0507_Weekly-Report\\客訴內容分析.csv",
   "volume_csv_path": "D:\\info\\0507_Weekly-Report\\月回收量等級.csv",
   "data_source_md_path": "D:\\info\\0507_Weekly-Report\\資料來源.md",
+  "data_staleness_warn_days": 7,
   "total_network_stations": 542,
   "output_dir": "D:\\info\\0507_Weekly-Report\\Operations-Weekly-Report\\weekly-ppt"
 }

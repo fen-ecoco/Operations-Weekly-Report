@@ -49,6 +49,32 @@ label_map = {
 df["問題細項"] = df["問題細項"].replace(label_map)
 df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce")
 
+# ---------- 資料新鮮度防呆檢查 ----------
+# 目的：避免忘記更新「客訴內容分析.csv」時，程式仍靜默用舊資料重複產出週報而沒人發現。
+# 邏輯：比對資料中最新一筆日期與「今天」的天數差，超過門檻(預設10天，可在 config.json 用
+#       "data_staleness_warn_days" 覆蓋)就視為過期，並把警告寫進 data.json 供第一頁顯示，
+#       同時印出醒目的 console 警告(會進 run_weekly.log)，但不中斷產出流程。
+STALENESS_WARN_DAYS = CONFIG.get("data_staleness_warn_days", 10)
+latest_data_date = df["dt"].max()
+data_staleness = {"isStale": False, "latestDataDate": None, "daysStale": None, "message": None}
+if pd.notna(latest_data_date):
+    days_stale = (pd.Timestamp(datetime.now().date()) - latest_data_date.normalize()).days
+    data_staleness["latestDataDate"] = latest_data_date.strftime("%Y-%m-%d")
+    data_staleness["daysStale"] = int(days_stale)
+    if days_stale > STALENESS_WARN_DAYS:
+        data_staleness["isStale"] = True
+        data_staleness["message"] = (
+            f"客訴內容分析.csv 最新資料日期為 {latest_data_date.strftime('%Y-%m-%d')}，"
+            f"距今已 {days_stale} 天沒有更新，本次可能是用舊資料產出，請確認來源檔是否忘記更新。"
+        )
+        print(f"\n{'!' * 60}")
+        print(f"警告：{data_staleness['message']}")
+        print(f"{'!' * 60}\n")
+else:
+    data_staleness["message"] = "客訴內容分析.csv 的「進件日期」欄位無法解析出任何有效日期，請確認來源檔格式。"
+    data_staleness["isStale"] = True
+    print(f"警告：{data_staleness['message']}")
+
 # 讀取「月回收量等級.csv」：全台站點等級（ARK/S~F）＋排名，供第二頁站點等級標示、第三頁改善清單共用
 # 這份檔案的欄位在合作過程中改過幾次，為避免格式再變動時整份週報中斷，以下全程防呆處理。
 vol_master_df = None
@@ -675,6 +701,7 @@ data = {
     "tierSectionLabel": tierSectionLabel,
     "statCards": statCards,
     "page4": page4,
+    "dataStaleness": data_staleness,
     "reportGeneratedDate": datetime.now().strftime("%Y/%m/%d"),
     "dataPeriodLabel": f"{(datetime.now() - timedelta(days=30)).strftime('%Y/%m/%d')}-{datetime.now().strftime('%m/%d')}",
 }

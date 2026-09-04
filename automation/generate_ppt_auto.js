@@ -59,6 +59,25 @@ function buildSlide1() {
     fontFace: F_BOLD, fontSize: 12.5, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0,
   });
 
+  // ---- 資料新鮮度警告（僅在偵測到來源CSV過期時顯示，放在標題與週次徽章之間的空白處，不影響其餘版面）----
+  const DS = D.dataStaleness;
+  if (DS && DS.isStale) {
+    const warnX = 5.55, warnW = PW - 0.4 - pillW - 0.15 - warnX;
+    slide.addShape('roundRect', {
+      x: warnX, y: 0.18, w: warnW, h: pillH, rectRadius: 0.08,
+      fill: { color: 'FDECEC' }, line: { color: 'D9534F', width: 1 },
+    });
+    slide.addText(
+      DS.latestDataDate
+        ? `⚠ 資料可能過期：來源CSV最新日期 ${DS.latestDataDate}，已 ${DS.daysStale} 天未更新，請確認`
+        : `⚠ ${DS.message}`,
+      {
+        x: warnX + 0.12, y: 0.18, w: warnW - 0.24, h: pillH,
+        fontFace: F_BOLD, fontSize: 9.5, bold: true, color: 'C0392B', valign: 'middle', margin: 0,
+      }
+    );
+  }
+
   // ---- 頂部四格數據卡 ----
   const cardsY = 0.75, cardsH = 1.52, cardGap = 0.2;
   const cardW = (PW - 0.8 - cardGap * 3) / 4;
