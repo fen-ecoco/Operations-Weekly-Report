@@ -45,17 +45,19 @@ function buildSlide1() {
   slide.background = { color: C.white };
 
   // ---- 標題 + 週次橢圓徽章（右上角） ----
-  slide.addText('ecoco 客服週報', {
-    x: 0.4, y: 0.16, w: 5, h: 0.4,
-    fontFace: F_BLACK, fontSize: 18, bold: true, color: C.darkGray, margin: 0,
+  // 頂部留白 1~1.5cm（0.39~0.59in），標題 y=0.5in ≈ 1.27cm，符合要求
+  const TOP_Y = 0.5;
+  slide.addText('客服課', {
+    x: 0.4, y: TOP_Y, w: 5, h: 0.48,
+    fontFace: F_BLACK, fontSize: 26, bold: true, color: C.darkGray, valign: 'middle', margin: 0,
   });
   const pillW = 2.7, pillH = 0.42;
   slide.addShape('roundRect', {
-    x: PW - 0.4 - pillW, y: 0.18, w: pillW, h: pillH, rectRadius: pillH / 2,
+    x: PW - 0.4 - pillW, y: TOP_Y + 0.02, w: pillW, h: pillH, rectRadius: pillH / 2,
     fill: { color: C.blue }, line: { type: 'none' },
   });
   slide.addText(`${D.week}（${D.range}）`, {
-    x: PW - 0.4 - pillW, y: 0.18, w: pillW, h: pillH,
+    x: PW - 0.4 - pillW, y: TOP_Y + 0.02, w: pillW, h: pillH,
     fontFace: F_BOLD, fontSize: 12.5, bold: true, color: C.white, align: 'center', valign: 'middle', margin: 0,
   });
 
@@ -64,7 +66,7 @@ function buildSlide1() {
   if (DS && DS.isStale) {
     const warnX = 5.55, warnW = PW - 0.4 - pillW - 0.15 - warnX;
     slide.addShape('roundRect', {
-      x: warnX, y: 0.18, w: warnW, h: pillH, rectRadius: 0.08,
+      x: warnX, y: TOP_Y + 0.02, w: warnW, h: pillH, rectRadius: 0.08,
       fill: { color: 'FDECEC' }, line: { color: 'D9534F', width: 1 },
     });
     slide.addText(
@@ -72,14 +74,14 @@ function buildSlide1() {
         ? `⚠ 資料可能過期：來源CSV最新日期 ${DS.latestDataDate}，已 ${DS.daysStale} 天未更新，請確認`
         : `⚠ ${DS.message}`,
       {
-        x: warnX + 0.12, y: 0.18, w: warnW - 0.24, h: pillH,
+        x: warnX + 0.12, y: TOP_Y + 0.02, w: warnW - 0.24, h: pillH,
         fontFace: F_BOLD, fontSize: 9.5, bold: true, color: 'C0392B', valign: 'middle', margin: 0,
       }
     );
   }
 
-  // ---- 頂部四格數據卡 ----
-  const cardsY = 0.75, cardsH = 1.52, cardGap = 0.2;
+  // ---- 頂部四格數據卡（跟隨標題往下微調，維持適當呼吸空間）----
+  const cardsY = 1.13, cardsH = 1.52, cardGap = 0.2;
   const cardW = (PW - 0.8 - cardGap * 3) / 4;
   const SC = D.statCards;
 
@@ -167,7 +169,7 @@ function buildSlide1() {
   }
 
   // ---- 左下：客訴趨勢分析（近4週）單位：件數 ----
-  const bottomY = cardsY + cardsH + 0.42;
+  const bottomY = cardsY + cardsH + 0.30;
   const leftW = 7.8, colGap = 0.3, rightX = 0.4 + leftW + colGap, rightW = PW - 0.4 - rightX;
   sectionBar(slide, '客訴趨勢分析（近4週）　單位：件數', 0.4, bottomY, leftW);
 
@@ -209,14 +211,16 @@ function buildSlide1() {
     });
     rows2.push(cells);
   });
+  // 左側表格高度對齊右側「非機台問題 Top3」總高度：3張卡(cardH3=1.24) + 2個間距(cardGap3=0.15) = 4.02
+  // 5列（1標題列+4週資料列）平均分配，rowH = 4.02 / 5 = 0.804
   slide.addTable(rows2, {
-    x: 0.4, y: bottomY + 0.38, w: leftW, h: 3.3, rowH: 0.66,
+    x: 0.4, y: bottomY + 0.38, w: leftW, h: 4.02, rowH: 0.804,
     colW: cw2, border: { type: 'solid', color: 'E5E5E5', pt: 0.5 }, autoPage: false,
   });
 
   // ---- 右下：非機台問題 Top3 ----
   sectionBar(slide, '非機台問題 Top 3', rightX, bottomY, rightW, { textColor: C.orange });
-  const cardH3 = 1.3, cardGap3 = 0.17;
+  const cardH3 = 1.24, cardGap3 = 0.15;
   const cardTopY = bottomY + 0.38;
   const cardBg3 = ['FFF4EF', 'EEF6FB', 'F5F7FF'];
   D.nonMachine.forEach((item, i) => {
