@@ -1,7 +1,7 @@
 {
   "week": "第39週",
   "range": "09/21 ~ 09/27",
-  "total": 70,
+  "total": 147,
   "cats": [
     {
       "label": "APP帳號設定問題",
@@ -10,28 +10,28 @@
     },
     {
       "label": "機台問題",
-      "count": 47,
-      "pct": 67.1
+      "count": 106,
+      "pct": 72.1
     },
     {
       "label": "回收點數問題",
-      "count": 3,
-      "pct": 4.3
+      "count": 12,
+      "pct": 8.2
     },
     {
       "label": "顧客關係",
-      "count": 12,
-      "pct": 17.1
+      "count": 14,
+      "pct": 9.5
     },
     {
       "label": "優惠券問題",
-      "count": 4,
-      "pct": 5.7
+      "count": 7,
+      "pct": 4.8
     },
     {
       "label": "APP使用問題",
-      "count": 4,
-      "pct": 5.7
+      "count": 8,
+      "pct": 5.4
     }
   ],
   "trend": [
@@ -139,95 +139,95 @@
         -3
       ],
       "machine": [
-        47,
-        -36
+        106,
+        23
       ],
       "points": [
-        3,
-        -3
+        12,
+        6
       ],
       "customer": [
-        12,
-        -4
+        14,
+        -2
       ],
       "coupon": [
-        4,
-        -7
+        7,
+        -4
       ],
       "app_use": [
-        4,
-        -8
+        8,
+        -4
       ],
       "tot": [
-        70,
-        -61
+        147,
+        16
       ]
     }
   ],
   "nonMachine": [
     {
       "rank": 1,
-      "name": "許願新增站點/設站建議",
-      "count": 6,
-      "pct": 8.6,
+      "name": "點數未入帳號",
+      "count": 10,
+      "pct": 6.8,
       "col": "FF5000",
       "note": ""
     },
     {
       "rank": 2,
       "name": "使用規則/限制條件說明",
-      "count": 4,
-      "pct": 5.7,
+      "count": 7,
+      "pct": 4.8,
       "col": "0076A9",
       "note": ""
     },
     {
       "rank": 3,
       "name": "APP畫面顯示與機台狀態不符",
-      "count": 4,
-      "pct": 5.7,
+      "count": 7,
+      "pct": 4.8,
       "col": "060E9F",
       "note": ""
     }
   ],
   "machIssues": [
     {
+      "label": "機台當機/無回應",
+      "count": 24,
+      "pct": 22.6
+    },
+    {
       "label": "回收箱滿艙",
-      "count": 12,
-      "pct": 25.5
+      "count": 19,
+      "pct": 17.9
     },
     {
       "label": "寶特瓶滿艙",
-      "count": 9,
-      "pct": 19.1
+      "count": 12,
+      "pct": 11.3
+    },
+    {
+      "label": "機台需維護/故障提醒",
+      "count": 11,
+      "pct": 10.4
     },
     {
       "label": "履帶未作動或異常抖動",
-      "count": 7,
-      "pct": 14.9
-    },
-    {
-      "label": "機台當機/無回應",
-      "count": 5,
-      "pct": 10.6
-    },
-    {
-      "label": "黑色分選門異常或卡瓶堵塞",
-      "count": 4,
+      "count": 9,
       "pct": 8.5
     },
     {
       "label": "其他機台問題",
-      "count": 10,
-      "pct": 21.3
+      "count": 31,
+      "pct": 29.2
     }
   ],
   "bottleTop3": [
     {
       "rank": 1,
       "name": "滿艙問題（回收箱／寶特瓶）",
-      "count": 21,
-      "pct": 38.9,
+      "count": 30,
+      "pct": 25.0,
       "col": "FF5000",
       "station": "F｜新北/全聯福利中心汐止康寧店站",
       "stationCount": 2
@@ -235,19 +235,19 @@
     {
       "rank": 2,
       "name": "機台當機/無回應",
-      "count": 5,
-      "pct": 9.3,
+      "count": 24,
+      "pct": 20.0,
       "col": "060E9F",
-      "station": "高雄/?揚捷仕堡站",
-      "stationCount": 5
+      "station": "D｜臺北/台北台大醫院站",
+      "stationCount": 9
     },
     {
       "rank": 3,
-      "name": "黑色分選門異常或卡瓶堵塞",
-      "count": 4,
-      "pct": 7.4,
+      "name": "點數未入帳號",
+      "count": 10,
+      "pct": 8.3,
       "col": "0076A9",
-      "station": "A｜臺南/全家新化新北店站",
+      "station": "B｜高雄/小北百貨高雄永豐店站",
       "stationCount": 1
     }
   ],
@@ -255,16 +255,16 @@
     {
       "rank": 1,
       "name": "履帶未作動或異常抖動",
-      "count": 3,
-      "pct": 60.0,
+      "count": 4,
+      "pct": 40.0,
       "col": "FF5000",
-      "station": "B｜臺南/全家台南育安店站",
-      "stationCount": 1
+      "station": "S｜新北/小北百貨新北雨農店站",
+      "stationCount": 2
     },
     {
       "rank": 2,
       "name": "機台需維護/故障提醒",
-      "count": 1,
+      "count": 2,
       "pct": 20.0,
       "col": "060E9F",
       "station": "F｜新竹/全家橫山致豐店站",
@@ -272,76 +272,76 @@
     },
     {
       "rank": 3,
-      "name": "辨識失敗異常或錯誤",
-      "count": 1,
+      "name": "點數重複入點",
+      "count": 2,
       "pct": 20.0,
       "col": "0076A9",
-      "station": "B｜桃園/全聯福利中心楊梅瑞溪店站",
-      "stationCount": 1
+      "station": "E｜臺南/全家台南萬年店站",
+      "stationCount": 2
     }
   ],
-  "bottleTotal": 54,
-  "batTotal": 5,
-  "machineTotal": 59,
-  "bottlePct": 91.5,
-  "batPct": 8.5,
+  "bottleTotal": 120,
+  "batTotal": 10,
+  "machineTotal": 130,
+  "bottlePct": 92.3,
+  "batPct": 7.7,
   "hotAreas": [
     {
+      "area": "臺北",
+      "total": 25,
+      "spots": [
+        {
+          "name": "台北台大醫院站",
+          "count": 11
+        },
+        {
+          "name": "台北醫學大學站",
+          "count": 3
+        },
+        {
+          "name": "義美吉盛台北榮總站",
+          "count": 2
+        }
+      ]
+    },
+    {
+      "area": "臺南",
+      "total": 22,
+      "spots": [
+        {
+          "name": "全聯福利中心台南東平店站",
+          "count": 3
+        },
+        {
+          "name": "億進寢具安南店站",
+          "count": 2
+        },
+        {
+          "name": "全家台南萬年店站",
+          "count": 2
+        }
+      ]
+    },
+    {
       "area": "高雄",
-      "total": 10,
+      "total": 17,
       "spots": [
         {
           "name": "?揚捷仕堡站",
           "count": 6
         },
         {
-          "name": "小北百貨高雄永豐店站",
-          "count": 1
-        },
-        {
           "name": "全聯福利中心大寮三隆店站",
-          "count": 1
-        }
-      ]
-    },
-    {
-      "area": "桃園",
-      "total": 9,
-      "spots": [
-        {
-          "name": "全聯福利中心中壢環東店站",
           "count": 2
         },
         {
-          "name": "Global Mall 環球桃園A19站",
-          "count": 1
-        },
-        {
-          "name": "特力家居桃園館站",
-          "count": 1
-        }
-      ]
-    },
-    {
-      "area": "臺南",
-      "total": 6,
-      "spots": [
-        {
-          "name": "全家新化新北店站",
-          "count": 1
-        },
-        {
-          "name": "小北百貨台南新中華東店站",
-          "count": 1
-        },
-        {
-          "name": "小北百貨台南新營復興店站",
+          "name": "小北百貨高雄永豐店站",
           "count": 1
         }
       ]
     }
   ],
-  "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（38.9%，21件），最高回報站點為 F｜新北/全聯福利中心汐止康寧店站（2件），建議優先派工檢修；電池機客訴則集中於「履帶未作動或異常抖動」（60.0%，3件），建議持續追蹤。",
+  "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（25.0%，30件），最高回報站點為 F｜新北/全聯福利中心汐止康寧店站（2件），建議優先派工檢修；電池機客訴則集中於「履帶未作動或異常抖動」（40.0%，4件），建議持續追蹤。",
   "lowVolumeStations": [
     {
       "name": "總太東光好室站",
@@ -499,30 +499,30 @@
   "tierSectionLabel": "等級+加分/瓶量：",
   "statCards": {
     "card1": {
-      "value": 70,
+      "value": 147,
       "prev": 131,
-      "diff": -61,
-      "wow_pct": -46.6
+      "diff": 16,
+      "wow_pct": 12.2
     },
     "card2": {
-      "name": "回收箱滿艙",
-      "count": 12,
-      "share": 17.1,
-      "share_delta": 4.1
+      "name": "機台當機/無回應",
+      "count": 24,
+      "share": 16.3,
+      "share_delta": 9.4
     },
     "card3": {
-      "name": "?揚捷仕堡站",
-      "area": "高雄",
-      "count": 6,
-      "diff": 6
+      "name": "台北台大醫院站",
+      "area": "臺北",
+      "count": 11,
+      "diff": 11
     },
     "card4": {
-      "pct": 32.9,
-      "pct_delta": -3.7,
+      "pct": 27.9,
+      "pct_delta": -8.7,
       "sample_type": "其他建議"
     },
-    "wow_total_pct": -46.6,
-    "mom_total_pct": -5.0
+    "wow_total_pct": 12.2,
+    "mom_total_pct": 11.8
   },
   "page4": {
     "kpi": {
@@ -667,8 +667,8 @@
   },
   "dataStaleness": {
     "isStale": false,
-    "latestDataDate": "2026-09-24",
-    "daysStale": 4,
+    "latestDataDate": "2026-09-28",
+    "daysStale": 0,
     "message": null
   },
   "reportGeneratedDate": "2026/09/28",
