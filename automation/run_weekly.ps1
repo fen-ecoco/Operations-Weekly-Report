@@ -76,6 +76,21 @@ if ($null -eq $LatestPptx) {
 Copy-Item -Path $LatestPptx.FullName -Destination $OutputDir -Force
 Write-Log "Step 4 OK: copied $($LatestPptx.Name) to $OutputDir"
 
+# ---------------- Step 4.5: copy to Google Drive backup folder ----------------
+$GDriveDir = $Config.gdrive_backup_dir
+if ($GDriveDir) {
+    try {
+        if (-not (Test-Path $GDriveDir)) {
+            Write-Log "WARNING: Google Drive backup folder not found at $GDriveDir, skipping backup"
+        } else {
+            Copy-Item -Path $LatestPptx.FullName -Destination $GDriveDir -Force
+            Write-Log "Step 4.5 OK: copied $($LatestPptx.Name) to $GDriveDir (Google Drive sync folder)"
+        }
+    } catch {
+        Write-Log "WARNING: failed to copy to Google Drive backup folder ($GDriveDir): $($_.Exception.Message)"
+    }
+}
+
 # ---------------- Step 5: git add / commit / push ----------------
 Write-Log "Step 5: git push"
 git add .

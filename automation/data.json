@@ -445,7 +445,7 @@
     }
   ],
   "totalNetworkStations": 566,
-  "dataSourceNote": "資料來源：Hive，一般站依近 30 個台灣日曆日實際清運的塑膠＋鋁罐瓶數分 S～F；三台以上有效收瓶機獨立列為 ARK",
+  "dataSourceNote": "詳細計分標準與說明，請參閱Hive平台 (以下為簡述)",
   "gradeTiers": [
     {
       "grade": "S",
@@ -668,9 +668,9 @@
   "dataStaleness": {
     "isStale": false,
     "latestDataDate": "2026-09-28",
-    "daysStale": 0,
+    "daysStale": 1,
     "message": null
   },
-  "reportGeneratedDate": "2026/09/28",
-  "dataPeriodLabel": "2026/08/29-09/28"
+  "reportGeneratedDate": "2026/09/29",
+  "dataPeriodLabel": "2026/08/30-09/29"
 }
