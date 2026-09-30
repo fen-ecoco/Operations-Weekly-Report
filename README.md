@@ -19,8 +19,8 @@ D:\info\0507_Weekly-Report\
         ├── generate_ppt_auto.js             ← Step 3：data.json → PPTX
         ├── make_icons.js                    ← 產生簡報用圖示（icons/，通常不需重跑）
         ├── icons/                            ← 簡報圖示素材
-        ├── run_weekly.ps1                    ← 主流程腳本（Steps 1-5 + git push）
-        ├── config.json                       ← 本機設定（含各資料檔路徑，UTF-8）
+        ├── run_weekly.ps1                    ← 主流程腳本（Steps 1-5 + Google Drive備份 + git push）
+        ├── config.json                       ← 本機設定（含各資料檔路徑與 Google Drive 備份路徑，UTF-8）
         ├── volume_history.json               ← 站點回收量歷史紀錄（自動累積，需 git 追蹤）
         ├── monthly_low_volume_history.json   ← 每月低回收量Top10名單累積紀錄（第四頁資料，自動累積，需 git 追蹤）
         └── README.md                         ← 自動化系統技術文件（欄位格式、config 說明等）
@@ -36,6 +36,20 @@ D:\info\0507_Weekly-Report\
 cd D:\info\0507_Weekly-Report\Operations-Weekly-Report\automation
 powershell -ExecutionPolicy Bypass -File .\run_weekly.ps1
 ```
+
+## ☁️ 備份位置
+
+每次執行成功後，PPT 會同時存放在三個地方：
+
+| 位置 | 說明 |
+|---|---|
+| 本機 `weekly-ppt` 資料夾 | Step 4 自動複製 |
+| GitHub repo | Step 5 `git add / commit / push` 一併推上去 |
+| Google 雲端硬碟 | Step 4.5 複製到本機同步資料夾 `D:\AI報告雲端備份`，由 Google Drive 電腦版自動上傳 |
+
+Google Drive 這一步的路徑設定在 `config.json` 的 `gdrive_backup_dir`。若該資料夾不存在或複製失敗，只會記錄 `WARNING`，不會中斷整個流程，PPT 仍會正常存到本機與 GitHub。
+
+> 前提：執行當下電腦需開機，且 Google Drive 電腦版須為登入、同步中的狀態，否則檔案只會留在本機資料夾、不會真的同步上雲端。
 
 ## 📊 週報內容（四頁）
 

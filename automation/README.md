@@ -1,7 +1,7 @@
 # ecoco 客服週報自動化系統 (v6)
 
 ## 這是什麼
-每週一 11:00 由 Windows Task Scheduler 觸發，自動讀取客訴與回收量資料，產出四頁 PPTX 週報：
+每週一 11:00 由 Windows Task Scheduler 觸發，自動讀取客訴與回收量資料，產出四頁 PPTX 週報，並備份到本機、GitHub、Google雲端硬碟三處：
 1. 客訴趨勢分析（近4週趨勢表＋當週四格數據卡＋非機台問題 Top3）
 2. 客訴機台類型與高頻站點分析（收瓶機/方舟、二代電池機 Top3，含站點等級 A/B/C）
 3. 月低回收量站點改善清單 Top10（含等級／Hive排名／MOM排名趨勢）
@@ -14,8 +14,8 @@ automation/
 ├── generate_ppt_auto.js            # 讀取 data.json，產出 PPTX
 ├── make_icons.js                   # 產生簡報圖示 PNG（icons/ 資料夾，通常不需重跑）
 ├── icons/                           # 簡報使用的圖示素材
-├── config.json                      # 所有檔案路徑設定（UTF-8，勿在 .ps1 內寫中文路徑）
-├── run_weekly.ps1                   # 主控腳本，Task Scheduler 排程的進入點
+├── config.json                      # 所有檔案路徑設定（UTF-8，勿在 .ps1 內寫中文路徑，含 Google Drive 備份路徑）
+├── run_weekly.ps1                   # 主控腳本，Task Scheduler 排程的進入點（含 Google Drive 備份步驟）
 ├── volume_history.json              # 站點「近30日合計(瓶)」歷史紀錄（首次執行後自動產生，需 git 追蹤）
 ├── monthly_low_volume_history.json  # 每月低回收量Top10名單累積紀錄（第四頁資料，自動產生，需 git 追蹤）
 └── README.md                        # 本檔案
@@ -44,10 +44,13 @@ automation/
   "volume_csv_path": "D:\\info\\0507_Weekly-Report\\月回收量等級.csv",
   "data_source_md_path": "D:\\info\\0507_Weekly-Report\\資料來源.md",
   "total_network_stations": 542,
-  "output_dir": "D:\\info\\0507_Weekly-Report\\Operations-Weekly-Report\\weekly-ppt"
+  "output_dir": "D:\\info\\0507_Weekly-Report\\Operations-Weekly-Report\\weekly-ppt",
+  "gdrive_backup_dir": "D:\\AI報告雲端備份"
 }
 ```
 `total_network_stations` 僅作為備援值（若「Hive排名」欄名解析失敗時才會用到），正常情況下總排名數字由 CSV 欄名自動帶入。
+
+`gdrive_backup_dir` 是 Google Drive 電腦版的本機同步資料夾路徑。Step 4.5 會把當次產出的 PPT 多複製一份到這裡，交由 Google Drive 電腦版自動上傳；路徑不存在或複製失敗只會記錄 `WARNING`，不影響其餘步驟。
 
 第四頁如需啟用「系統／活動影響評估」洞察，可額外新增 `activity_calendar_path` 欄位指向活動時間表 CSV（欄位：日期、活動名稱）；未設定時該段落自動略過，不影響其餘頁面產出。
 
@@ -81,6 +84,15 @@ powershell -File run_weekly.ps1
 - 觸發時間：每週一 11:00
 - 已啟用 `StartWhenAvailable`（機器未開機時，開機後補跑）
 - 若排程建立失敗，通常是 `.ps1` 內含中文字元導致編碼錯誤 → 本版已改為純 ASCII 腳本，中文路徑一律經由 `config.json`（UTF-8）讀取
+
+## 備份位置（Step 4.5：Google Drive）
+每次執行成功後，PPT 會同時存放三份：本機 `weekly-ppt` 資料夾（Step 4）、GitHub repo（Step 5 push）、Google 雲端硬碟（Step 4.5）。
+
+Step 4.5 的作法是把當次產出的 PPT 複製到 `config.json` 的 `gdrive_backup_dir` 所指的本機資料夾（Google Drive 電腦版的同步資料夾），交由 Drive 電腦版自動上傳，腳本本身不呼叫任何雲端 API。
+
+- 該資料夾不存在或複製失敗時，只會記錄 `WARNING`，不會中斷 Step 5 及其餘流程
+- 前提：執行當下電腦需開機，且 Google Drive 電腦版須為登入、同步中的狀態，否則檔案只會留在本機、不會真的同步上雲端
+- 若要更換備份資料夾，只需修改 `config.json` 的 `gdrive_backup_dir`，不需改 `.ps1`
 
 ## 版本重點（本次交付）
 - 第二頁站點等級、第三頁改善清單改為共用同一份 `月回收量等級.csv`（不再使用 `收瓶量分析報告.csv`）
