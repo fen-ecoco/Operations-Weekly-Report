@@ -217,3 +217,12 @@
 2026-09-29 17:48:40  Step 5: git push
 2026-09-29 17:48:43  Step 5 OK: pushed to GitHub
 2026-09-29 17:48:43  ===== Weekly report run finished successfully =====
+2026-10-05 11:00:01  ===== Weekly report run started =====
+2026-10-05 11:00:01  Step 1 OK: all source files found
+2026-10-05 11:00:01  Step 2: running analyze.py
+2026-10-05 11:00:04  Step 2 OK: data.json generated
+2026-10-05 11:00:04  Step 3: running generate_ppt_auto.js
+2026-10-05 11:00:06  Step 3 OK: PPTX generated
+2026-10-05 11:00:06  Step 4 OK: copied ecoco_客服週報_第40週_0928~1004.pptx to D:\info\0507_Weekly-Report\Operations-Weekly-Report\weekly-ppt
+2026-10-05 11:00:06  Step 4.5 OK: copied ecoco_客服週報_第40週_0928~1004.pptx to D:\AI報告雲端備份 (Google Drive sync folder)
+2026-10-05 11:00:06  Step 5: git push
