@@ -39,31 +39,31 @@
       "w": "第38週",
       "d": "09/14-09/20",
       "app_acc": [
-        0,
+        3,
         0
       ],
       "machine": [
-        0,
+        83,
         0
       ],
       "points": [
-        0,
+        6,
         0
       ],
       "customer": [
-        0,
+        16,
         0
       ],
       "coupon": [
-        0,
+        11,
         0
       ],
       "app_use": [
-        0,
+        12,
         0
       ],
       "tot": [
-        0,
+        131,
         0
       ]
     },
@@ -72,63 +72,63 @@
       "d": "09/21-09/27",
       "app_acc": [
         0,
-        0
+        -3
       ],
       "machine": [
-        0,
-        0
+        97,
+        14
       ],
       "points": [
-        0,
-        0
+        10,
+        4
       ],
       "customer": [
-        0,
-        0
+        12,
+        -4
       ],
       "coupon": [
-        0,
-        0
+        7,
+        -4
       ],
       "app_use": [
-        0,
-        0
+        7,
+        -5
       ],
       "tot": [
-        0,
-        0
+        133,
+        2
       ]
     },
     {
       "w": "第40週",
       "d": "09/28-10/04",
       "app_acc": [
-        0,
-        0
+        7,
+        7
       ],
       "machine": [
-        0,
-        0
+        143,
+        46
       ],
       "points": [
-        0,
-        0
+        12,
+        2
       ],
       "customer": [
-        0,
-        0
+        28,
+        16
       ],
       "coupon": [
-        0,
-        0
+        12,
+        5
       ],
       "app_use": [
-        0,
-        0
+        4,
+        -3
       ],
       "tot": [
-        0,
-        0
+        206,
+        73
       ]
     },
     {
@@ -136,31 +136,31 @@
       "d": "10/05-10/11",
       "app_acc": [
         0,
-        0
+        -7
       ],
       "machine": [
         70,
-        70
+        -73
       ],
       "points": [
         9,
-        9
+        -3
       ],
       "customer": [
         19,
-        19
+        -9
       ],
       "coupon": [
         9,
-        9
+        -3
       ],
       "app_use": [
         5,
-        5
+        1
       ],
       "tot": [
         112,
-        112
+        -94
       ]
     }
   ],
@@ -500,64 +500,162 @@
   "statCards": {
     "card1": {
       "value": 112,
-      "prev": 0,
-      "diff": 112,
-      "wow_pct": 0
+      "prev": 206,
+      "diff": -94,
+      "wow_pct": -45.6
     },
     "card2": {
       "name": "回收箱滿艙",
       "count": 16,
       "share": 14.3,
-      "share_delta": 14.3
+      "share_delta": 2.6
     },
     "card3": {
       "name": "小北百貨新北雨農店站",
       "area": "新北",
       "count": 5,
-      "diff": 5
+      "diff": 4
     },
     "card4": {
       "pct": 37.5,
-      "pct_delta": 37.5,
+      "pct_delta": 6.9,
       "sample_type": "使用規則/限制條件說明"
     },
-    "wow_total_pct": 0,
-    "mom_total_pct": 0
+    "wow_total_pct": -45.6,
+    "mom_total_pct": 55.6
   },
   "page4": {
     "kpi": {
       "monthTotal": {
-        "value": 0,
+        "value": 590,
         "period": "26年9月",
-        "deltaPct": null,
-        "prevValue": null
+        "deltaPct": 15.0,
+        "prevValue": 513
       },
       "perStation": {
-        "value": 0.0,
-        "deltaPct": null,
-        "prevValue": null
+        "value": 1.05,
+        "deltaPct": 15.4,
+        "prevValue": 0.91
       },
       "quarterTotal": {
-        "value": null,
+        "value": 1781,
         "quarterLabel": "26年Q3",
-        "deltaPct": null,
-        "prevValue": null
+        "deltaPct": 20.5,
+        "prevValue": 1478
       },
       "machinePct": {
-        "value": 0,
-        "deltaPct": null
+        "value": 64.7,
+        "deltaPct": 26.1
       }
     },
-    "monthlyTrend": [],
+    "monthlyTrend": [
+      {
+        "period": "2026-05",
+        "label": "5月",
+        "total": 880,
+        "perStation": 1.57
+      },
+      {
+        "period": "2026-06",
+        "label": "6月",
+        "total": 598,
+        "perStation": 1.07
+      },
+      {
+        "period": "2026-07",
+        "label": "7月",
+        "total": 678,
+        "perStation": 1.21
+      },
+      {
+        "period": "2026-08",
+        "label": "8月",
+        "total": 513,
+        "perStation": 0.91
+      },
+      {
+        "period": "2026-09",
+        "label": "9月",
+        "total": 590,
+        "perStation": 1.05
+      }
+    ],
     "quarterCompare": {
       "curLabel": "26年Q3",
-      "prevLabel": null,
-      "cur": [],
-      "prev": [],
-      "biggestChange": null
+      "prevLabel": "26年Q2",
+      "cur": [
+        {
+          "label": "APP帳號設定問題",
+          "count": 37,
+          "pct": 2.1
+        },
+        {
+          "label": "機台問題",
+          "count": 1152,
+          "pct": 64.7
+        },
+        {
+          "label": "回收點數問題",
+          "count": 149,
+          "pct": 8.4
+        },
+        {
+          "label": "顧客關係",
+          "count": 252,
+          "pct": 14.1
+        },
+        {
+          "label": "優惠券問題",
+          "count": 111,
+          "pct": 6.2
+        },
+        {
+          "label": "APP使用問題",
+          "count": 80,
+          "pct": 4.5
+        }
+      ],
+      "prev": [
+        {
+          "label": "APP帳號設定問題",
+          "count": 427,
+          "pct": 28.9
+        },
+        {
+          "label": "機台問題",
+          "count": 571,
+          "pct": 38.6
+        },
+        {
+          "label": "回收點數問題",
+          "count": 168,
+          "pct": 11.4
+        },
+        {
+          "label": "顧客關係",
+          "count": 146,
+          "pct": 9.9
+        },
+        {
+          "label": "優惠券問題",
+          "count": 88,
+          "pct": 6.0
+        },
+        {
+          "label": "APP使用問題",
+          "count": 77,
+          "pct": 5.2
+        }
+      ],
+      "biggestChange": {
+        "label": "APP帳號設定問題",
+        "delta": -26.8,
+        "cur_pct": 2.1,
+        "prev_pct": 28.9
+      }
     },
-    "structuralInsight": "本季各問題類型佔比與上季相近，未見明顯結構性變化。（資料累積中，須滿一年以上同季比較才能判斷是否為季節性規律）",
-    "headline": "資料累積中，尚無法產出完整趨勢摘要。",
+    "structuralInsight": "本季「APP帳號設定問題」佔比較上季下降 26.8 個百分點（28.9% → 2.1%），為本季結構變化最大的問題類型，改善成效可留意是否延續。（資料累積中，須滿一年以上同季比較才能判斷是否為季節性規律）",
+    "headline": "本月客訴量較上月上升 15.0%，本季較上季上升 20.5%，整體呈現上升趨勢，需留意。 本季變化最大：「APP帳號設定問題」下降 26.8 個百分點，建議優先關注。",
     "activityInsight": null,
     "highRiskStations": [
       {
