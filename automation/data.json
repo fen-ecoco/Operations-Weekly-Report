@@ -238,7 +238,7 @@
       "count": 9,
       "pct": 11.5,
       "col": "060E9F",
-      "station": "B｜臺南/全聯福利中心台南東平店站",
+      "station": "A｜臺南/全聯福利中心台南東平店站",
       "stationCount": 2
     },
     {
@@ -247,7 +247,7 @@
       "count": 8,
       "pct": 10.3,
       "col": "0076A9",
-      "station": "E｜彰化/特力屋彰化員林店站",
+      "station": "D｜彰化/特力屋彰化員林店站",
       "stationCount": 2
     }
   ],
@@ -267,7 +267,7 @@
       "count": 1,
       "pct": 14.3,
       "col": "060E9F",
-      "station": "B｜臺南/全聯福利中心歸仁店站",
+      "station": "C｜臺南/全聯福利中心歸仁店站",
       "stationCount": 1
     },
     {
@@ -344,40 +344,10 @@
   "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（34.6%，27件），最高回報站點為 C｜桃園/全聯福利中心龍潭中興店站（2件），建議優先派工檢修；電池機客訴則集中於「投入物卡住_瓶罐/電池」（28.6%，2件），建議持續追蹤。",
   "lowVolumeStations": [
     {
-      "name": "衛生福利部雙和醫院第一醫療大樓站",
-      "city": "新北",
-      "contribution": 0,
-      "hiveRank": 531,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "租賃"
-    },
-    {
-      "name": "臺北醫學大學雙和校區站",
-      "city": "新北",
-      "contribution": 0,
-      "hiveRank": null,
-      "grade": null,
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "租賃"
-    },
-    {
-      "name": "台南市環保局站",
-      "city": "臺南",
-      "contribution": 0,
-      "hiveRank": 530,
-      "grade": "F",
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "買斷"
-    },
-    {
       "name": "合橫國民小學站",
       "city": "澎湖",
       "contribution": 0,
-      "hiveRank": 529,
+      "hiveRank": 525,
       "grade": "F",
       "momChange": null,
       "machineType": "H30",
@@ -397,7 +367,7 @@
       "name": "全聯福利中心大寮三隆店站",
       "city": "高雄",
       "contribution": 0,
-      "hiveRank": 528,
+      "hiveRank": 523,
       "grade": "F",
       "momChange": null,
       "machineType": "AI-4",
@@ -407,8 +377,8 @@
       "name": "澎湖車船處交通船馬公候船室站",
       "city": "澎湖",
       "contribution": 0,
-      "hiveRank": 527,
-      "grade": "F",
+      "hiveRank": 324,
+      "grade": "D",
       "momChange": null,
       "machineType": "H30",
       "leaseType": null
@@ -434,14 +404,44 @@
       "leaseType": "租賃"
     },
     {
-      "name": "全聯福利中心台中大昌店站",
-      "city": "臺中",
+      "name": "台北醫學大學站",
+      "city": "臺北",
       "contribution": 0,
-      "hiveRank": 532,
+      "hiveRank": 487,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": "租賃"
+    },
+    {
+      "name": "全聯福利中心學甲華宗店站",
+      "city": "臺南",
+      "contribution": 0,
+      "hiveRank": 521,
       "grade": "F",
       "momChange": null,
       "machineType": "AI-4",
       "leaseType": null
+    },
+    {
+      "name": "南山高中大中一樓站",
+      "city": "新北",
+      "contribution": 0,
+      "hiveRank": 531,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
+      "name": "臺北醫學大學雙和校區站",
+      "city": "新北",
+      "contribution": 0,
+      "hiveRank": null,
+      "grade": null,
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": "租賃"
     }
   ],
   "totalNetworkStations": 566,
@@ -573,7 +573,7 @@
       {
         "name": "澎湖車船處交通船馬公候船室站",
         "streak": 2,
-        "grade": "F"
+        "grade": "D"
       },
       {
         "name": "花蓮縣環境保護局站",
@@ -584,6 +584,11 @@
         "name": "Global Mall 環球新左營車站",
         "streak": 2,
         "grade": null
+      },
+      {
+        "name": "台北醫學大學站",
+        "streak": 2,
+        "grade": "F"
       }
     ]
   },
