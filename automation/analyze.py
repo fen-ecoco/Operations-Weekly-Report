@@ -275,7 +275,11 @@ vol = vol_master_df.copy()
 vol = vol.dropna(subset=["站點名稱"]).copy()
 
 hive_rank_col = next((c for c in vol.columns if c.startswith("Hive排名")), None)
-volume_col = next((c for c in vol.columns if "近30日合計" in c or c.replace(" ", "").startswith("總回收量")), None)
+_vol_candidates = ["近30日合計(瓶)", "近30日清運合計(瓶)"]
+volume_col = next((c for c in _vol_candidates if c in vol.columns), None)
+if volume_col is None:
+    volume_col = next((c for c in vol.columns
+                       if re.search(r"近30日.*合計", c) or c.replace(" ", "").startswith("總回收量")), None)
 city_col = "縣市" if "縣市" in vol.columns else ("城市" if "城市" in vol.columns else None)
 if hive_rank_col is None or volume_col is None or city_col is None:
     raise KeyError(
