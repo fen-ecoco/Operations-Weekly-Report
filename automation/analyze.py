@@ -47,7 +47,7 @@ label_map = {
     "app多重異常狀況": "APP多重異常狀況",
 }
 df["問題細項"] = df["問題細項"].replace(label_map)
-df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce")
+df["dt"] = pd.to_datetime(df["進件日期"], errors="coerce", format="mixed")  # 日期格式混用（2026/9/1 與 2026-09-23）時，避免後者被判成空值而漏算
 
 # ---------- 資料新鮮度防呆檢查 ----------
 # 目的：避免忘記更新「客訴內容分析.csv」時，程式仍靜默用舊資料重複產出週報而沒人發現。
@@ -290,15 +290,25 @@ if hive_rank_col is None or volume_col is None or city_col is None:
 rank_match = re.search(r"(\d+)", hive_rank_col)
 total_network_stations = int(rank_match.group(1)) if rank_match else CONFIG.get("total_network_stations")
 
+# 只列有「等級」且有「Hive排名」的站（新站／快閃站等尚未分級者排除）
+vol = vol[vol["等級"].notna() & vol[hive_rank_col].notna()].copy()
 vol["總量_num"] = vol[volume_col].astype(str).str.replace(",", "").str.strip().astype(float)
-vol = vol.sort_values("總量_num", ascending=True).head(10)
 
-# 讀取／更新「近30日合計(瓶)」歷史紀錄（供月增減率使用；首次執行無比較基準，之後每月自動累積）
+# 讀取／更新「近30日合計(瓶)」歷史紀錄（供排名與月增減率使用；每月自動累積）
 current_month_key = datetime.now().strftime("%Y-%m")
 volume_history = {}
 if os.path.exists(RANK_HISTORY_PATH):
     with open(RANK_HISTORY_PATH, "r", encoding="utf-8") as f:
         volume_history = json.load(f)
+
+def _prev_volume(name):
+    h = volume_history.get(str(name), {})
+    prev = sorted([m for m in h if m != current_month_key], reverse=True)
+    return h[prev[0]] if prev else float("inf")   # 無累積紀錄者排在同量站之後
+
+# 排名：①本月近30日量低→高 ②同量時上月量較低者在前 ③再依Hive排名數字大者在前
+vol["_prev"] = vol["站點名稱"].map(_prev_volume)
+vol = vol.sort_values(["總量_num", "_prev", hive_rank_col], ascending=[True, True, False]).head(10)
 
 lowVolumeStations = []
 for _, r in vol.iterrows():
@@ -446,27 +456,42 @@ statCards = {
 }
 
 # ================= 11. 第四頁：客訴趨勢洞察（MoM／QoQ）=================
-# 「最近一個完整月」＝目前月份的前一個月（當月尚未走完，用當月資料會失真，故一律往前推一個月）
+# 第四頁 KPI（本月客訴總量／客訴密度／MoM）：
+#   「本月」＝產出日所在月份；採「本月累計」對「上月同期天數」比較（例：10/12 產出 → 10/1~10/11 對 9/1~9/11）。
+#   累計截止日 ＝ 產出日前一天與「資料最新日期」兩者較早者（避免把尚未入檔的日期算進去，造成比較失真）。
+#   趨勢圖與季度比較仍用「已完整走完的月份／季度」，避免用未完整的月份畫圖造成誤導。
 today_ts = pd.Timestamp(datetime.now().date())
-last_complete_month = (today_ts.replace(day=1) - pd.Timedelta(days=1)).to_period("M")
-prev_month = last_complete_month - 1
+prod_month = today_ts.to_period("M")
+prev_month = prod_month - 1
+last_complete_month = prod_month - 1          # 趨勢圖、季度判斷、活動紀錄用（已走完的最近一個月）
 earliest_period = df["dt"].dropna().dt.to_period("M").min()
 
+_latest = df["dt"].max()
+_cutoff = min(today_ts - pd.Timedelta(days=1), _latest.normalize()) if pd.notna(_latest) else today_ts - pd.Timedelta(days=1)
+mtd_days = _cutoff.day if _cutoff.to_period("M") == prod_month else 0   # 本月已累計天數（0＝本月尚無資料）
+prev_month_days_total = prev_month.days_in_month
+mtd_days_prev = min(mtd_days, prev_month_days_total)
+mtd_range_label = f"1~{mtd_days}日" if mtd_days else "本月尚無資料"
+prev_range_label = f"{prev_month.month}/1~{prev_month.month}/{mtd_days_prev}" if mtd_days else ""
 
-def month_slice_p4(period):
-    return df[df["dt"].dt.to_period("M") == period]
+
+def month_slice_p4(period, days=None):
+    m = df["dt"].dt.to_period("M") == period
+    if days is not None:
+        m = m & (df["dt"].dt.day <= days)
+    return df[m]
 
 
-def month_stats(period):
-    sub = month_slice_p4(period)
+def month_stats(period, days=None):
+    sub = month_slice_p4(period, days)
     tot = len(sub)
     vc = sub["問題類型"].value_counts()
     cats_m = {label: int(vc.get(key, 0)) for label, key in CATS_ORDER}
     return {"period": str(period), "total": tot, "cats": cats_m}
 
 
-cur_month_stats = month_stats(last_complete_month)
-prev_month_stats = month_stats(prev_month) if prev_month >= earliest_period else None
+cur_month_stats = month_stats(prod_month, mtd_days)
+prev_month_stats = month_stats(prev_month, mtd_days_prev) if (prev_month >= earliest_period and mtd_days) else None
 mom_pct = (
     round((cur_month_stats["total"] - prev_month_stats["total"]) / prev_month_stats["total"] * 100, 1)
     if prev_month_stats and prev_month_stats["total"] else None
@@ -493,7 +518,7 @@ for i in range(5, -1, -1):
     p = last_complete_month - i
     if p < earliest_period:
         continue
-    stats = month_stats(p)
+    stats = month_stats(p)   # 趨勢圖用完整月份
     monthly_trend.append({
         "period": str(p), "label": f"{p.month}月",
         "total": stats["total"], "perStation": per_station(stats["total"]),
@@ -590,7 +615,7 @@ else:
 
 headline_parts = []
 if mom_dir:
-    headline_parts.append(f"本月客訴量較上月{mom_dir} {mom_abs}%")
+    headline_parts.append(f"本月累計客訴量較上月同期{mom_dir} {mom_abs}%")
 if qoq_dir:
     headline_parts.append(f"本季較上季{qoq_dir} {qoq_abs}%")
 headline = "，".join(headline_parts)
@@ -608,8 +633,8 @@ if ACTIVITY_CSV and os.path.exists(ACTIVITY_CSV):
         act_df = pd.read_csv(ACTIVITY_CSV)
         act_df.columns = act_df.columns.str.strip()
         act_df["date"] = pd.to_datetime(act_df["日期"], errors="coerce")
-        month_start = last_complete_month.start_time
-        month_end = last_complete_month.end_time
+        month_start = prod_month.start_time
+        month_end = _cutoff + pd.Timedelta(days=1) - pd.Timedelta(seconds=1)
         acts = act_df[(act_df["date"] >= month_start) & (act_df["date"] <= month_end)]
         if len(acts):
             names = "、".join(acts["活動名稱"].astype(str).tolist())
@@ -652,7 +677,8 @@ highRiskStations.sort(key=lambda s: -s["streak"])
 page4 = {
     "kpi": {
         "monthTotal": {
-            "value": cur_month_stats["total"], "period": f"{last_complete_month.year % 100}年{last_complete_month.month}月",
+            "value": cur_month_stats["total"], "period": f"{prod_month.year % 100}年{prod_month.month}月",
+            "rangeLabel": mtd_range_label, "prevRangeLabel": prev_range_label,
             "deltaPct": mom_pct, "prevValue": prev_month_stats["total"] if prev_month_stats else None,
         },
         "perStation": {

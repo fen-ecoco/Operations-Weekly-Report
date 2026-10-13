@@ -75,28 +75,28 @@
         -3
       ],
       "machine": [
-        97,
-        14
+        106,
+        23
       ],
       "points": [
-        10,
-        4
+        12,
+        6
       ],
       "customer": [
-        12,
-        -4
+        14,
+        -2
       ],
       "coupon": [
         7,
         -4
       ],
       "app_use": [
-        7,
-        -5
+        8,
+        -4
       ],
       "tot": [
-        133,
-        2
+        147,
+        16
       ]
     },
     {
@@ -108,15 +108,15 @@
       ],
       "machine": [
         143,
-        46
+        37
       ],
       "points": [
         12,
-        2
+        0
       ],
       "customer": [
         28,
-        16
+        14
       ],
       "coupon": [
         12,
@@ -124,11 +124,11 @@
       ],
       "app_use": [
         4,
-        -3
+        -4
       ],
       "tot": [
         206,
-        73
+        59
       ]
     },
     {
@@ -344,6 +344,16 @@
   "alertText": "【本週融合洞察】收瓶機客訴集中於「滿艙問題（回收箱／寶特瓶）」（34.6%，27件），最高回報站點為 C｜桃園/全聯福利中心龍潭中興店站（2件），建議優先派工檢修；電池機客訴則集中於「投入物卡住_瓶罐/電池」（28.6%，2件），建議持續追蹤。",
   "lowVolumeStations": [
     {
+      "name": "南山高中大中一樓站",
+      "city": "新北",
+      "contribution": 0,
+      "hiveRank": 531,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
       "name": "合橫國民小學站",
       "city": "澎湖",
       "contribution": 0,
@@ -352,16 +362,6 @@
       "momChange": null,
       "machineType": "H30",
       "leaseType": null
-    },
-    {
-      "name": "Global Mall 環球南港車站",
-      "city": "臺北",
-      "contribution": 0,
-      "hiveRank": null,
-      "grade": null,
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "租賃"
     },
     {
       "name": "全聯福利中心大寮三隆店站",
@@ -374,36 +374,6 @@
       "leaseType": null
     },
     {
-      "name": "澎湖車船處交通船馬公候船室站",
-      "city": "澎湖",
-      "contribution": 0,
-      "hiveRank": 324,
-      "grade": "D",
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": null
-    },
-    {
-      "name": "花蓮縣環境保護局站",
-      "city": "花蓮",
-      "contribution": 0,
-      "hiveRank": null,
-      "grade": null,
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "買斷"
-    },
-    {
-      "name": "Global Mall 環球新左營車站",
-      "city": "高雄",
-      "contribution": 0,
-      "hiveRank": null,
-      "grade": null,
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "租賃"
-    },
-    {
       "name": "台北醫學大學站",
       "city": "臺北",
       "contribution": 0,
@@ -414,34 +384,64 @@
       "leaseType": "租賃"
     },
     {
-      "name": "全聯福利中心學甲華宗店站",
+      "name": "澎湖赤崁社區活動中心站",
+      "city": "澎湖",
+      "contribution": 0,
+      "hiveRank": 467,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
+      "name": "衛生福利部雙和醫院第一醫療大樓站",
+      "city": "新北",
+      "contribution": 0,
+      "hiveRank": 347,
+      "grade": "D",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": "租賃"
+    },
+    {
+      "name": "澎湖車船處交通船馬公候船室站",
+      "city": "澎湖",
+      "contribution": 0,
+      "hiveRank": 324,
+      "grade": "D",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
+      "name": "迷客夏臺南華平店站",
       "city": "臺南",
       "contribution": 0,
-      "hiveRank": 521,
+      "hiveRank": 534,
+      "grade": "F",
+      "momChange": null,
+      "machineType": "H30",
+      "leaseType": null
+    },
+    {
+      "name": "全家高雄凱歌店站",
+      "city": "高雄",
+      "contribution": 0,
+      "hiveRank": 533,
       "grade": "F",
       "momChange": null,
       "machineType": "AI-4",
       "leaseType": null
     },
     {
-      "name": "南山高中大中一樓站",
-      "city": "新北",
+      "name": "全聯福利中心嘉義湖子內店站",
+      "city": "嘉義",
       "contribution": 0,
-      "hiveRank": 531,
+      "hiveRank": 532,
       "grade": "F",
       "momChange": null,
-      "machineType": "H30",
+      "machineType": "AI-HD",
       "leaseType": null
-    },
-    {
-      "name": "臺北醫學大學雙和校區站",
-      "city": "新北",
-      "contribution": 0,
-      "hiveRank": null,
-      "grade": null,
-      "momChange": null,
-      "machineType": "H30",
-      "leaseType": "租賃"
     }
   ],
   "totalNetworkStations": 566,
@@ -522,25 +522,27 @@
       "sample_type": "使用規則/限制條件說明"
     },
     "wow_total_pct": -45.6,
-    "mom_total_pct": 55.6
+    "mom_total_pct": 59.4
   },
   "page4": {
     "kpi": {
       "monthTotal": {
-        "value": 590,
-        "period": "26年9月",
-        "deltaPct": 15.0,
-        "prevValue": 513
+        "value": 224,
+        "period": "26年10月",
+        "rangeLabel": "1~11日",
+        "prevRangeLabel": "9/1~9/11",
+        "deltaPct": 17.9,
+        "prevValue": 190
       },
       "perStation": {
-        "value": 1.05,
-        "deltaPct": 15.4,
-        "prevValue": 0.91
+        "value": 0.4,
+        "deltaPct": 17.6,
+        "prevValue": 0.34
       },
       "quarterTotal": {
-        "value": 1781,
+        "value": 1795,
         "quarterLabel": "26年Q3",
-        "deltaPct": 20.5,
+        "deltaPct": 21.4,
         "prevValue": 1478
       },
       "machinePct": {
@@ -576,8 +578,8 @@
       {
         "period": "2026-09",
         "label": "9月",
-        "total": 590,
-        "perStation": 1.05
+        "total": 604,
+        "perStation": 1.08
       }
     ],
     "quarterCompare": {
@@ -591,18 +593,18 @@
         },
         {
           "label": "機台問題",
-          "count": 1152,
+          "count": 1161,
           "pct": 64.7
         },
         {
           "label": "回收點數問題",
-          "count": 149,
+          "count": 151,
           "pct": 8.4
         },
         {
           "label": "顧客關係",
-          "count": 252,
-          "pct": 14.1
+          "count": 254,
+          "pct": 14.2
         },
         {
           "label": "優惠券問題",
@@ -611,7 +613,7 @@
         },
         {
           "label": "APP使用問題",
-          "count": 80,
+          "count": 81,
           "pct": 4.5
         }
       ],
@@ -655,16 +657,16 @@
       }
     },
     "structuralInsight": "本季「APP帳號設定問題」佔比較上季下降 26.8 個百分點（28.9% → 2.1%），為本季結構變化最大的問題類型，改善成效可留意是否延續。（資料累積中，須滿一年以上同季比較才能判斷是否為季節性規律）",
-    "headline": "本月客訴量較上月上升 15.0%，本季較上季上升 20.5%，整體呈現上升趨勢，需留意。 本季變化最大：「APP帳號設定問題」下降 26.8 個百分點，建議優先關注。",
+    "headline": "本月累計客訴量較上月同期上升 17.9%，本季較上季上升 21.4%，整體呈現上升趨勢，需留意。 本季變化最大：「APP帳號設定問題」下降 26.8 個百分點，建議優先關注。",
     "activityInsight": null,
     "highRiskStations": [
       {
-        "name": "Global Mall 環球南港車站",
+        "name": "全聯福利中心大寮三隆店站",
         "streak": 2,
-        "grade": null
+        "grade": "F"
       },
       {
-        "name": "全聯福利中心大寮三隆店站",
+        "name": "台北醫學大學站",
         "streak": 2,
         "grade": "F"
       },
@@ -672,30 +674,15 @@
         "name": "澎湖車船處交通船馬公候船室站",
         "streak": 2,
         "grade": "D"
-      },
-      {
-        "name": "花蓮縣環境保護局站",
-        "streak": 2,
-        "grade": null
-      },
-      {
-        "name": "Global Mall 環球新左營車站",
-        "streak": 2,
-        "grade": null
-      },
-      {
-        "name": "台北醫學大學站",
-        "streak": 2,
-        "grade": "F"
       }
     ]
   },
   "dataStaleness": {
     "isStale": false,
     "latestDataDate": "2026-10-11",
-    "daysStale": 1,
+    "daysStale": 2,
     "message": null
   },
-  "reportGeneratedDate": "2026/10/12",
-  "dataPeriodLabel": "2026/09/12-10/12"
+  "reportGeneratedDate": "2026/10/13",
+  "dataPeriodLabel": "2026/09/13-10/13"
 }

@@ -562,7 +562,7 @@ function buildSlide4() {
   {
     const x = 0.4;
     const k = P4.kpi.monthTotal;
-    const sub = k.prevValue != null ? `較上月（${k.prevValue}件）` : '無上月比較基準';
+    const sub = k.prevValue != null ? `${k.rangeLabel}累計，較上月同期（${k.prevRangeLabel}）${k.prevValue}件` : (k.rangeLabel === '本月尚無資料' ? '本月尚無資料' : '無上月比較基準');
     kpiCard(x, C.blue, 'headset_blue', `本月客訴總量（${k.period}）`,
       [{ text: `${k.value} `, options: { fontSize: 25, bold: true, color: C.blue, fontFace: F_BLACK } },
        { text: '件', options: { fontSize: 12.5, bold: true, color: C.blue, fontFace: F_BOLD } }],
